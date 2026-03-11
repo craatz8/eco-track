@@ -22,7 +22,8 @@ INSERT INTO activity_factors (activity_name, category, co2_per_unit, unit_label)
 ('Gasoline Car Driving', 'Transport', 0.404, 'miles'),
 ('Electricity Usage', 'Home', 0.385, 'kWh'),
 ('Beef Meal', 'Food', 6.5, 'servings'),
-('Flight (Short Haul)', 'Transport', 0.25, 'miles');
+('Flight (Short Haul)', 'Transport', 0.25, 'miles'),
+('Flight (Long Haul)', 'Transport', 0.18, 'miles');
 
 CREATE TABLE user_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,

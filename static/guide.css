@@ -1,0 +1,82 @@
+/* guide.css */
+.guide-page-container {
+    background: linear-gradient(135deg, #f1f8e9 0%, #ffffff 100%);
+    min-height: 100vh;
+    padding-bottom: 50px;
+    /* This ensures the background starts from the very top of the page */
+    margin-top: -20px; 
+}
+
+.guide-card-full {
+    display: flex;
+    gap: 30px;
+    background: white;
+    border: 2px solid #c8e6c9; /* Light green border */
+    border-radius: 20px;
+    padding: 35px;
+    margin-bottom: 25px;
+    align-items: flex-start;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease;
+}
+
+.guide-card-full:hover {
+    transform: translateY(-3px);
+    border-color: #2e7d32;
+}
+
+.card-icon {
+    font-size: 40px;
+    background: #f1f8e9;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    flex-shrink: 0;
+}
+
+.card-content h3 {
+    color: #2e7d32;
+    margin-top: 0;
+    font-weight: 800;
+}
+
+.card-content p {
+    line-height: 1.8;
+    color: #444;
+}
+
+/* Highlights for specific numbers like '6.5 kg' */
+.metric-highlight {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 800;
+    font-family: 'Courier New', Courier, monospace; /* Makes it look like technical data */
+}
+
+/* The styled Pro-Tip box */
+.pro-tip-box {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f9fbf9;
+    border-left: 4px solid #2e7d32;
+    border-radius: 8px;
+}
+
+.pro-tip-box h4 {
+    margin: 0 0 5px 0;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #2e7d32;
+}
+
+.pro-tip-box p {
+    margin: 0;
+    font-size: 0.95rem !important;
+    color: #555 !important;
+}

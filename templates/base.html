@@ -6,32 +6,22 @@
     <title>EcoTrack | Carbon Tracker</title>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='LiquidEther.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='PillNav.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='guide.css') }}">
     
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script type="text/babel" src="{{ url_for('static', filename='components/PillNav.js') }}"></script>
 </head>
 <body>
-
-    <nav style="background: #2e7d32; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="margin: 0;">EcoTrack</h2>
-        <div>
-            {% if session.get('user_id') %}
-                <span style="margin-right: 15px;">Hi, {{ session.user_name }}</span>
-                <a href="/" style="color: white; margin-right: 15px; text-decoration: none;">Dashboard</a>
-                <a href="/guide" style="color: white; margin-right: 15px; text-decoration: none;">User Guide</a>
-                <a href="/logout" style="color: white; text-decoration: none;">Logout</a>
-            {% else %}
-                <a href="/login" style="color: white; text-decoration: none;">Login</a>
-            {% endif %}
-        </div>
-    </nav>
-
     <main style="padding: 20px; max-width: 1000px; margin: auto;">
         {% block content %}{% endblock %}
     </main>
 
     {% block scripts %}{% endblock %}
-
 </body>
 </html>

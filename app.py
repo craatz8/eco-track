@@ -136,10 +136,10 @@ def user_stats():
     try:
         conn = get_conn()
         cur = conn.cursor(dictionary=True)
-        # This SQL query multiplies the amount by the factor for each log
+        # Use COALESCE to ensure we return 0 instead of None/Null
         query = """
             SELECT 
-                SUM(ul.amount * af.co2_per_unit) AS total_co2,
+                COALESCE(SUM(ul.amount * af.co2_per_unit), 0) AS total_co2,
                 COUNT(ul.id) AS total_entries
             FROM user_logs ul
             JOIN activity_factors af ON ul.activity_id = af.id
@@ -160,7 +160,7 @@ def get_user_logs():
     try:
         conn = get_conn()
         cur = conn.cursor(dictionary=True)
-        # We JOIN with activity_factors to get the name of the activity, not just the ID
+
         query = """
             SELECT ul.id, af.activity_name, ul.amount, 
                    (ul.amount * af.co2_per_unit) as total_co2, 
@@ -215,6 +215,22 @@ def update_log(log_id):
 @app.route('/guide')
 def guide():
     return render_template('guide.html')
+
+@app.route('/api/reset-logs', methods=['DELETE'])
+def reset_logs():
+    if 'user_id' not in session:
+        return jsonify({"status": "Error"}), 401
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        # ONLY delete logs belonging to the logged-in user
+        cur.execute("DELETE FROM user_logs WHERE user_id = %s", (session['user_id'],))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"status": "Success", "message": "Your logs have been reset."})
+    except Exception as e:
+        return jsonify({"status": "Error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

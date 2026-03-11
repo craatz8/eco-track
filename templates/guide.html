@@ -1,22 +1,82 @@
 {% extends "base.html" %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='guide.css') }}">
+{% endblock %}
+
 {% block content %}
-<div style="max-width: 800px; margin: 0 auto; line-height: 1.6;">
-    <h1 style="color: #2e7d32;">EcoTrack User Guide</h1>
-    <p>Understanding your footprint helps you make better choices. Here is how we calculate your impact:</p>
+<div class="guide-page-container">
+    
+    <div id="pill-nav-root" style="padding: 20px 0;"></div>
 
-    <div style="background: #f1f8e9; padding: 20px; borderRadius: 10px; margin: 20px 0;">
-        <h3>🥩 Beef Meals</h3>
-        <p><strong>What is a serving?</strong> One serving is roughly 4-6 ounces (the size of a deck of cards). Beef has a high footprint due to methane emissions and land use.</p>
-    </div>
+    <div class="container" style="max-width: 900px;">
+        <div class="page-header" style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-weight: 850; color: #1b5e20;">EcoTrack User Guide</h1>
+            <p style="color: #444;">Detailed breakdown of how your impact is calculated.</p>
+        </div>
 
-    <div style="background: #e8f5e9; padding: 20px; borderRadius: 10px; margin: 20px 0;">
-        <h3>⚡ Electricity</h3>
-        <p><strong>Where to find kWh?</strong> Check your monthly utility bill or "Smart Meter" app. 1 kWh powers a standard LED bulb for about 100 hours.</p>
-    </div>
+        <section class="guide-card-full">
+            <div class="card-icon">🚗</div>
+            <div class="card-content">
+                <h3>Gasoline Vehicle Impact</h3>
+                <p>The environmental cost of driving is calculated based on the standard EPA emission factor of <span class="metric-highlight">0.404 kg CO2/mile</span>. This figure accounts for the tailpipe emissions of an average passenger vehicle getting roughly 22-25 MPG, but it also considers the "well-to-wheel" impact, including the energy required to refine and transport gasoline.</p>
+                <div class="pro-tip-box">
+                    <h4>Pro-Tip</h4>
+                    <p>Use your vehicle's <strong>trip odometer</strong> or check your weekly "Timeline" on Google Maps to find exact mileage. Idling for more than 10 seconds uses more fuel than restarting your engine, so turn it off if you're waiting!</p>
+                </div>
+            </div>
+        </section>
 
-    <div style="background: #f1f8e9; padding: 20px; borderRadius: 10px; margin: 20px 0;">
-        <h3>✈️ Flights</h3>
-        <p><strong>Short vs Long Haul:</strong> We categorize "Long Haul" as any flight over 6 hours (e.g., London to NYC). These flights emit significantly more CO2 because of the fuel required for takeoff and high-altitude cruising.</p>
+        <section class="guide-card-full">
+            <div class="card-icon">🥩</div>
+            <div class="card-content">
+                <h3>Beef & Livestock Emissions</h3>
+                <p>Beef is one of the most resource-intensive foods on the planet, requiring massive amounts of land, water, and feed. Because cattle produce methane—a greenhouse gas significantly more potent than CO2—during digestion, our tracker uses a benchmark of <span class="metric-highlight">6.5 kg CO2</span> per serving.</p>
+                <div class="pro-tip-box">
+                    <h4>Visual Guide</h4>
+                    <p>When logging your meals, consider that a single "serving" is typically <strong>4 to 6 ounces (115-170g)</strong>. This is visually comparable to the size of a standard <strong>deck of playing cards</strong> or a typical burger patty. If you're eating a large steak (12oz+), log it as 2 or 3 servings.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="guide-card-full">
+            <div class="card-icon">⚡</div>
+            <div class="card-content">
+                <h3>Electricity Usage (kWh)</h3>
+                <p>Electricity emissions are "indirect" because they happen at the power plant, not in your home. We use a national average emission factor of <span class="metric-highlight">0.39 kg per kWh</span>. To find your specific data, locate your most recent utility bill and look for a section labeled "Usage Detail" or "kWh".</p>
+                <div class="pro-tip-box">
+                    <h4>Where to look</h4>
+                    <p>For reference, <strong>1 kWh</strong> is roughly equivalent to running a dishwasher once or keeping a laptop plugged in for 20 hours. Checking your utility bill monthly is the best way to see how seasonal changes like AC or heating affect your footprint.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="guide-card-full">
+            <div class="card-icon">✈️</div>
+            <div class="card-content">
+                <h3>Air Travel (Short vs Long Haul)</h3>
+                <p>Aviation impact is categorized by distance. <span class="metric-highlight">Short-Haul flights (< 700 miles)</span> have high emissions per mile due to the energy required for takeoff and landing. <span class="metric-highlight">Long-Haul flights (> 2,500 miles)</span> use massive amounts of fuel but are slightly more efficient per mile once at cruising altitude.</p>
+                <div class="pro-tip-box">
+                    <h4>Logging Accuracy</h4>
+                    <p>When logging, use the total miles provided by your airline ticket, not just a straight line on a map. For reference, a long-haul flight from NYC to London (3,400 miles) generates nearly <strong>1,000 kg of CO2</strong> per passenger.</p>
+                </div>
+            </div>
+        </section>
     </div>
 </div>
+
+<script type="text/babel">
+  const root = ReactDOM.createRoot(document.getElementById('pill-nav-root'));
+  root.render(
+    <PillNav 
+      items={[
+        { label: 'Dashboard', href: '/' },
+        { label: 'User Guide', href: '/guide' },
+        { label: 'Logout', href: '/logout' },
+        { label: 'Hi, Connor Raatz', href: '#', isUser: true }
+      ]} 
+      activeHref="/guide"
+    />
+  );
+</script>
 {% endblock %}
