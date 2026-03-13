@@ -58,7 +58,7 @@ const PillNav = ({
     return (
     <div className="pill-nav-container">
         <nav className="pill-nav">
-        {/* 1. THE LEAF LOGO: Replaces the text logo to avoid squishing */}
+        {/* 1. THE LEAF LOGO */}
         <div className="pill-logo">
             <span style={{ fontSize: '1.5rem' }}>🌿</span>
         </div>

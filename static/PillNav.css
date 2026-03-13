@@ -9,7 +9,7 @@
   --pill-bg: #2e7d32;     
   --pill-text: #ffffff;   
   --hover-text: #ffffff;
-  --dark-bg: #333;        /* Unified dark color for bar and hover */
+  --dark-bg: #333;        
   margin-bottom: 20px;
 }
 
@@ -27,7 +27,7 @@
   display: flex;
   align-items: center;
   height: var(--nav-h);
-  background: var(--dark-bg); /* Use the unified dark color */
+  background: var(--dark-bg);
   border-radius: 9999px;
   padding: var(--padding);
   box-sizing: border-box;
@@ -81,7 +81,7 @@
   overflow: hidden;
   cursor: pointer;
   box-sizing: border-box;
-  white-space: nowrap;    /* CRITICAL: Prevents text from breaking into 2 lines */
+  white-space: nowrap;    
 }
 
 /* =========================================
@@ -93,14 +93,14 @@
   left: 50%;
   bottom: 0;
   border-radius: 50%;
-  background: var(--dark-bg); /* Unified: Matches the background bar exactly */
+  background: var(--dark-bg); 
   z-index: 1;
   pointer-events: none;
 }
 
 .pill .label-stack {
   position: relative;
-  display: flex;          /* Changed to flex for better centering */
+  display: flex;          
   align-items: center;
   justify-content: center;
   z-index: 2;
@@ -110,12 +110,12 @@
 
 .pill .pill-label, 
 .pill .pill-label-hover {
-  position: absolute;     /* Stack them perfectly on top of each other */
+  position: absolute;     
   width: 100%;
   text-align: center;
   left: 0;
-  top: 50%;               /* Move to vertical center */
-  transform: translateY(-50%); /* Adjust for perfect centering */
+  top: 50%;               
+  transform: translateY(-50%); 
 }
 
 .pill .pill-label {
@@ -126,28 +126,25 @@
 .pill .pill-label-hover {
   z-index: 3;
   color: var(--hover-text);
-  opacity: 0;             /* Hidden until JS animation triggers */
+  opacity: 0;            
 }
 
-/* --- THE HAMMER FIX: Force Width & Prevent Squishing --- */
 
-/* 1. Force the outer container to match the Dashboard card exactly */
 .pill-nav-container {
-    width: 1152px !important; /* The exact width of max-w-6xl */
-    max-width: 95vw !important; /* Safety for smaller screens */
+    width: 1152px !important; 
+    max-width: 95vw !important; 
     margin: 20px auto !important;
     display: flex !important;
     justify-content: center !important;
 }
 
-/* 2. Force the Dark Bar to be the full width of its parent */
+
 .pill-nav {
     width: 100% !important;
     display: flex !important;
     align-items: center !important;
 }
 
-/* 3. Force the items to spread out and NEVER shrink */
 .pill-nav-items {
     flex-grow: 1 !important;
     display: flex !important;
@@ -162,11 +159,11 @@
 }
 
 .pill-list li {
-    flex: 1 0 auto !important; /* Grow if needed, but NEVER shrink below content size */
+    flex: 1 0 auto !important;
 }
 
 .pill {
     padding: 0 25px !important;
-    min-width: max-content !important; /* This stops "DASH" and "LOG" from happening */
+    min-width: max-content !important; 
     width: 100% !important;
 }

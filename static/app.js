@@ -1,7 +1,6 @@
 const { useState, useEffect, useRef } = React;
 
 function Dashboard() {
-    // --- LOGIC: 100% UNTOUCHED ---
     const [activities, setActivities] = useState([]);
     const [selectedActivity, setSelectedActivity] = useState('');
     const [amount, setAmount] = useState('');
@@ -35,7 +34,7 @@ function Dashboard() {
         { label: `Hi, ${window.currentUserName || 'User'}`, href: '#', isUser: true }
     ];
 
-    // --- EFFECTS & API: 100% UNTOUCHED ---
+    // --- EFFECTS & API ---
     useEffect(() => {
         const ecoTips = [
             "Switching to LED bulbs can reduce energy use by up to 75%.",
@@ -84,15 +83,35 @@ function Dashboard() {
       else document.body.classList.add('simple-bg');
     }, [isAnimatedBg]);
 
-    const deleteLog = (id) => { if(confirm("Are you sure?")) fetch(`/api/delete-log/${id}`, { method: 'DELETE' }).then(() => setRefreshTrigger(prev => prev + 1)); };
-    const resetAllLogs = () => { if (confirm("⚠️ DANGER: Permanently delete ALL logs?")) fetch('/api/reset-logs', { method: 'DELETE' }).then(() => setRefreshTrigger(prev => prev + 1)); };
-    
+    const deleteLog = (id) => { 
+        if(confirm("Are you sure?")) {
+            fetch(`/api/delete-log/${id}`, { method: 'DELETE' })
+                .then(() => {
+                    setRefreshTrigger(prev => prev + 1);
+                    scrollToTracker(); 
+                });
+        }
+    }; 
+
+    const resetAllLogs = () => { 
+        if (confirm("⚠️ DANGER: Permanently delete ALL logs?")) {
+            fetch('/api/reset-logs', { method: 'DELETE' })
+                .then(() => {
+                    setRefreshTrigger(prev => prev + 1);
+                    scrollToTracker(); 
+                });
+        }
+    };    
+
     const saveEdit = (id) => {
         fetch(`/api/update-log/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount: editValue })
-        }).then(() => { setEditingId(null); setRefreshTrigger(prev => prev + 1); });
+          }).then(() => 
+            { setEditingId(null);
+            setRefreshTrigger(prev => prev + 1); });
+            scrollToTracker();
     };
 
     const handleSubmit = (e) => {
@@ -106,17 +125,26 @@ function Dashboard() {
                 setMessage("✅ Activity logged!");
                 setAmount(''); setSelectedActivity('');
                 setRefreshTrigger(prev => prev + 1);
+                scrollToTracker();
                 setTimeout(() => setMessage(''), 3000);
             }
         });
     };
 
+    const scrollToTracker = () => {
+      const tracker = document.getElementById('total-footprint-card');
+      if (tracker) {
+          tracker.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' // Centers the card in the viewport
+          });
+      }
+    };
+
     const saveGoal = () => { setWeeklyGoal(tempGoal); localStorage.setItem('ecoTrack_goal', JSON.stringify(tempGoal)); setIsEditingGoal(false); };
     
-    // 1. Calculate the ratio first so it's available everywhere
     const ratio = totalCo2 / weeklyGoal;
 
-    // 2. Pass the ratio into the color function (or just use it directly)
     const calculateHeatColor = (r) => {
         // Default Base Green
         if (r <= 0.1) return 'hsl(153, 42%, 18%)'; 
@@ -135,7 +163,7 @@ function Dashboard() {
 const dynamicBgColor = calculateHeatColor(ratio);
     return (
         <div className="relative min-h-screen font-sans text-slate-900 pb-20">
-            {/* 1. NAVIGATION (Tailwind forces perfect centering) */}
+            {/* 1. NAVIGATION */}
             <header className="sticky top-0 z-50 flex justify-center w-full py-4 px-6">
                 {window.PillNav ? (
                     <div className="flex items-center justify-center">
@@ -182,11 +210,12 @@ const dynamicBgColor = calculateHeatColor(ratio);
             )}
 
             <main className="max-w-6xl mx-auto px-6 mt-12">
-              {/* HERO SECTION - REFINED DEPTH WITH DYNAMIC HEAT */}
+              {/* HERO SECTION */}
               <div 
-                  className="rounded-[3.5rem] p-14 text-center shadow-[0_20px_50px_rgba(0,0,0,0.15)] mb-12 relative overflow-hidden group transition-colors duration-1000 ease-in-out"
-                  style={{ 
-                      background: `radial-gradient(circle at top left, ${dynamicBgColor}, #0a1a14)` 
+                  id="total-footprint-card"
+                  className={`rounded-[3.5rem] p-14 text-center shadow-[0_20px_50px_rgba(0,0,0,0.15)] mb-12 relative overflow-hidden group transition-all duration-1000 ease-in-out ${message ? 'ring-8 ring-green-400/50' : 'ring-0 ring-transparent'}`}
+                  style={{
+                    background: `radial-gradient(circle at top left, ${dynamicBgColor}, #0a1a14)` 
                   }}
               >
                   {/* Subtle Decorative Elements */}
@@ -339,14 +368,14 @@ const dynamicBgColor = calculateHeatColor(ratio);
     );
 }
 
-// --- ANIMATED NUMBER COMPONENT: 100% UNTOUCHED ---
+// --- ANIMATED NUMBER COMPONENT ---
 function AnimatedNumber({ value }) {
     const [displayValue, setDisplayValue] = React.useState(0);
     const prevValue = useRef(0);
     useEffect(() => {
         const start = prevValue.current;
         const end = value;
-        const duration = 800; 
+        const duration = 1500; 
         let startTime = null;
         const animate = (currentTime) => {
             if (!startTime) startTime = currentTime;

@@ -191,26 +191,23 @@
 
 body.simple-bg::before, 
 body.simple-bg::after {
-    display: none !important; /* Ensure they are hidden when simple mode is active */
+    display: none !important; 
 }
 
-/* Hide them by default so they don't fight with the animation */
 body::before, body::after {
   content: "";
   display: none; 
 }
 
 body {
-  /* Default background when animated */
   background: #ffffff; 
   position: relative;
   overflow-x: hidden;
   transition: background 0.5s ease;
 }
 
-/* When simple mode is on, apply the static gradient */
 body.simple-bg {
-    background: linear-gradient(to top, #f0fdf4 0%, #ffffff 100%); /* green-50 to white */
+    background: linear-gradient(to top, #f0fdf4 0%, #ffffff 100%); 
     background-attachment: fixed;
 }
 
@@ -277,7 +274,6 @@ body.simple-bg {
     flex: 1;
 }
 
-/* Floating Settings Button */
 .settings-fab {
     position: fixed;
     bottom: 30px;
@@ -296,7 +292,6 @@ body.simple-bg {
 }
 .settings-fab:hover { transform: rotate(90deg) scale(1.1); }
 
-/* Settings Modal Overlay */
 .settings-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -324,7 +319,6 @@ body.simple-bg {
     padding: 10px 0;
 }
 
-/* Toggle Switch Styling */
 .switch {
   position: relative;
   display: inline-block;
@@ -356,7 +350,6 @@ body.simple-bg {
 input:checked + .slider { background-color: #2e7d32; }
 input:checked + .slider:before { transform: translateX(26px); }
 
-/* Base Pill Button Style */
 .btn-pill {
     display: inline-flex;
     align-items: center;
@@ -372,9 +365,8 @@ input:checked + .slider:before { transform: translateX(26px); }
     text-decoration: none;
 }
 
-/* Primary Action (Set Goal) */
 .btn-primary-pill {
-    background-color: #e8f5e9; /* Light green background */
+    background-color: #e8f5e9; 
     color: #2e7d32;
     border: 2px solid #2e7d32;
 }
@@ -386,12 +378,11 @@ input:checked + .slider:before { transform: translateX(26px); }
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Destructive Action (Reset All Logs) */
 .btn-danger-pill {
     background-color: #ffebee;
     color: #c62828;
     border: 2px solid #c62828;
-    gap: 8px; /* Space for the emoji */
+    gap: 8px;
 }
 
 .btn-danger-pill:hover {
@@ -401,18 +392,17 @@ input:checked + .slider:before { transform: translateX(26px); }
     box-shadow: 0 4px 8px rgba(198, 40, 40, 0.2);
 }
 
-/* Small Action Icons (Edit/Delete) */
 .action-icon-group {
     display: flex !important;
-    flex-direction: row !important; /* Forces horizontal alignment */
-    gap: 8px;           /* Slightly tighter gap for smaller buttons */
+    flex-direction: row !important; 
+    gap: 8px;          
     align-items: center;
     justify-content: center;
     margin: 0 auto;
 }
 
 .btn-icon-pill {
-    width: 28px;        /* Reduced from 40px to be "slightly smaller" */
+    width: 28px;   
     height: 28px;
     border-radius: 50%;
     display: flex;
@@ -421,15 +411,15 @@ input:checked + .slider:before { transform: translateX(26px); }
     background: #ffffff;
     border: 1px solid #e0e0e0;
     transition: all 0.2s ease;
-    padding: 0;         /* Ensures the emoji stays centered */
+    padding: 0;     
     cursor: pointer;
-    font-size: 12px;    /* Slightly scales down the emoji icon size */
+    font-size: 12px;   
 }
 
 .btn-icon-pill:hover {
     background: #f8f9fa;
-    border-color: #2e7d32; /* Subtle green highlight on hover */
-    transform: scale(1.1); /* Adds a little pop since they are smaller now */
+    border-color: #2e7d32; 
+    transform: scale(1.1); 
 }
 
 :root {
@@ -457,7 +447,7 @@ input:checked + .slider:before { transform: translateX(26px); }
     background: #ffffff;
     border-radius: 20px;
     padding: 28px;
-    border: 2px solid var(--border-color); /* Matches the light green theme */
+    border: 2px solid var(--border-color);
     position: relative;
     overflow: hidden;
     transition: all 0.3s ease;
@@ -548,15 +538,13 @@ input:checked + .slider:before { transform: translateX(26px); }
     letter-spacing: 1px;
 }
 
-/* Custom palette for better contrast */
 :root {
-    --eco-dark: #1b4332;   /* Deep forest for text */
-    --eco-green: #2d6a4f;  /* Main action green */
-    --eco-accent: #74c69d; /* Soft accent green */
-    --eco-bg: #f0fdf4;     /* The soft green-white hue */
+    --eco-dark: #1b4332;   
+    --eco-green: #2d6a4f;  
+    --eco-accent: #74c69d; 
+    --eco-bg: #f0fdf4;     
 }
 
-/* Enhanced Glassmorphism for cards */
 .glass-card {
     background: rgba(255, 255, 255, 0.6) !important;
     backdrop-filter: blur(12px);
@@ -565,7 +553,6 @@ input:checked + .slider:before { transform: translateX(26px); }
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
 }
 
-/* Refined Hero Gradient (more depth) */
 .hero-gradient {
     background: radial-gradient(circle at top left, #2d6a4f, #1b4332);
 }
@@ -582,7 +569,6 @@ input:checked + .slider:before { transform: translateX(26px); }
     100% { opacity: 0.8; }
 }
 
-/* Use this for the inner glow when over goal */
 .burning-glow {
     animation: burn-flicker 2s infinite alternate;
     background: radial-gradient(circle, rgba(220, 38, 38, 0.2) 0%, transparent 70%);
