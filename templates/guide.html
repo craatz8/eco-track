@@ -1,64 +1,62 @@
 {% extends "base.html" %}
 
-{% block extra_css %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='guide.css') }}">
-{% endblock %}
-
 {% block content %}
-<div class="guide-page-container">
+<div class="guide-page-container min-h-screen bg-fixed bg-gradient-to-b from-white to-[#f0fdf4] pb-20">
     
-    <div id="pill-nav-root" style="padding: 20px 0;"></div>
+    <header class="flex justify-center w-full py-8 sticky top-0 z-50">
+        <div id="pill-nav-root" class="w-fit"></div>
+    </header>
 
-    <div class="container" style="max-width: 900px;">
-        <div class="page-header" style="text-align: center; margin-bottom: 40px;">
-            <h1 style="font-weight: 850; color: #1b5e20;">EcoTrack User Guide</h1>
-            <p style="color: #444;">Detailed breakdown of how your impact is calculated.</p>
+    <div class="max-w-[900px] mx-auto px-6">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-[850] text-[#1b5e20] mb-2">EcoTrack User Guide</h1>
+            <p class="text-slate-600">Detailed breakdown of how your impact is calculated.</p>
         </div>
 
-        <section class="guide-card-full">
-            <div class="card-icon">🚗</div>
-            <div class="card-content">
-                <h3>Gasoline Vehicle Impact</h3>
-                <p>The environmental cost of driving is calculated based on the standard EPA emission factor of <span class="metric-highlight">0.404 kg CO2/mile</span>. This figure accounts for the tailpipe emissions of an average passenger vehicle getting roughly 22-25 MPG, but it also considers the "well-to-wheel" impact, including the energy required to refine and transport gasoline.</p>
-                <div class="pro-tip-box">
-                    <h4>Pro-Tip</h4>
-                    <p>Use your vehicle's <strong>trip odometer</strong> or check your weekly "Timeline" on Google Maps to find exact mileage. Idling for more than 10 seconds uses more fuel than restarting your engine, so turn it off if you're waiting!</p>
+        <section class="flex gap-6 bg-white/80 backdrop-blur-md p-8 rounded-[2rem] shadow-xl border border-slate-100 mb-8 transition-all hover:shadow-2xl">
+            <div class="text-4xl shrink-0">🚗</div>
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-3">Gasoline Vehicle Impact</h3>
+                <p class="text-slate-600 leading-relaxed">The environmental cost of driving is calculated based on the standard EPA emission factor of <span class="bg-green-100 text-green-800 px-2 py-1 rounded font-bold">0.404 kg CO2/mile</span>. This figure accounts for the tailpipe emissions of an average passenger vehicle getting roughly 22-25 MPG, but it also considers the "well-to-wheel" impact, including the energy required to refine and transport gasoline.</p>
+                <div class="mt-6 bg-slate-50 border-l-4 border-green-500 p-4 rounded-r-xl">
+                    <h4 class="text-sm font-black uppercase tracking-wider text-green-700 mb-1">Pro-Tip</h4>
+                    <p class="text-sm text-slate-700">Use your vehicle's <strong>trip odometer</strong> or check your weekly "Timeline" on Google Maps to find exact mileage. Idling for more than 10 seconds uses more fuel than restarting your engine, so turn it off if you're waiting!</p>
                 </div>
             </div>
         </section>
 
-        <section class="guide-card-full">
-            <div class="card-icon">🥩</div>
-            <div class="card-content">
-                <h3>Beef & Livestock Emissions</h3>
-                <p>Beef is one of the most resource-intensive foods on the planet, requiring massive amounts of land, water, and feed. Because cattle produce methane—a greenhouse gas significantly more potent than CO2—during digestion, our tracker uses a benchmark of <span class="metric-highlight">6.5 kg CO2</span> per serving.</p>
-                <div class="pro-tip-box">
-                    <h4>Visual Guide</h4>
-                    <p>When logging your meals, consider that a single "serving" is typically <strong>4 to 6 ounces (115-170g)</strong>. This is visually comparable to the size of a standard <strong>deck of playing cards</strong> or a typical burger patty. If you're eating a large steak (12oz+), log it as 2 or 3 servings.</p>
+        <section class="flex gap-6 bg-white/80 backdrop-blur-md p-8 rounded-[2rem] shadow-xl border border-slate-100 mb-8 transition-all hover:shadow-2xl">
+            <div class="text-4xl shrink-0">🥩</div>
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-3">Beef & Livestock Emissions</h3>
+                <p class="text-slate-600 leading-relaxed">Beef is one of the most resource-intensive foods on the planet, requiring massive amounts of land, water, and feed. Because cattle produce methane, a greenhouse gas significantly more potent than CO2, during digestion, our tracker uses a benchmark of <span class="bg-green-100 text-green-800 px-2 py-1 rounded font-bold">6.5 kg CO2</span> per serving.</p>
+                <div class="mt-6 bg-slate-50 border-l-4 border-green-500 p-4 rounded-r-xl">
+                    <h4 class="text-sm font-black uppercase tracking-wider text-green-700 mb-1">Visual Guide</h4>
+                    <p class="text-sm text-slate-700">When logging your meals, consider that a single "serving" is typically <strong>4 to 6 ounces (115-170g)</strong>. This is visually comparable to the size of a standard <strong>deck of playing cards</strong> or a typical burger patty. If you're eating a large steak (12oz+), log it as 2 or 3 servings.</p>
                 </div>
             </div>
         </section>
 
-        <section class="guide-card-full">
-            <div class="card-icon">⚡</div>
-            <div class="card-content">
-                <h3>Electricity Usage (kWh)</h3>
-                <p>Electricity emissions are "indirect" because they happen at the power plant, not in your home. We use a national average emission factor of <span class="metric-highlight">0.39 kg per kWh</span>. To find your specific data, locate your most recent utility bill and look for a section labeled "Usage Detail" or "kWh".</p>
-                <div class="pro-tip-box">
-                    <h4>Where to look</h4>
-                    <p>For reference, <strong>1 kWh</strong> is roughly equivalent to running a dishwasher once or keeping a laptop plugged in for 20 hours. Checking your utility bill monthly is the best way to see how seasonal changes like AC or heating affect your footprint.</p>
+        <section class="flex gap-6 bg-white/80 backdrop-blur-md p-8 rounded-[2rem] shadow-xl border border-slate-100 mb-8 transition-all hover:shadow-2xl">
+            <div class="text-4xl shrink-0">⚡</div>
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-3">Electricity Usage (kWh)</h3>
+                <p class="text-slate-600 leading-relaxed">Electricity emissions are "indirect" because they happen at the power plant, not in your home. We use a national average emission factor of <span class="bg-green-100 text-green-800 px-2 py-1 rounded font-bold">0.39 kg per kWh</span>. To find your specific data, locate your most recent utility bill and look for a section labeled "Usage Detail" or "kWh".</p>
+                <div class="mt-6 bg-slate-50 border-l-4 border-green-500 p-4 rounded-r-xl">
+                    <h4 class="text-sm font-black uppercase tracking-wider text-green-700 mb-1">Where to look</h4>
+                    <p class="text-sm text-slate-700">For reference, <strong>1 kWh</strong> is roughly equivalent to running a dishwasher once or keeping a laptop plugged in for 20 hours. Checking your utility bill monthly is the best way to see how seasonal changes like AC or heating affect your footprint.</p>
                 </div>
             </div>
         </section>
 
-        <section class="guide-card-full">
-            <div class="card-icon">✈️</div>
-            <div class="card-content">
-                <h3>Air Travel (Short vs Long Haul)</h3>
-                <p>Aviation impact is categorized by distance. <span class="metric-highlight">Short-Haul flights (< 700 miles)</span> have high emissions per mile due to the energy required for takeoff and landing. <span class="metric-highlight">Long-Haul flights (> 2,500 miles)</span> use massive amounts of fuel but are slightly more efficient per mile once at cruising altitude.</p>
-                <div class="pro-tip-box">
-                    <h4>Logging Accuracy</h4>
-                    <p>When logging, use the total miles provided by your airline ticket, not just a straight line on a map. For reference, a long-haul flight from NYC to London (3,400 miles) generates nearly <strong>1,000 kg of CO2</strong> per passenger.</p>
+        <section class="flex gap-6 bg-white/80 backdrop-blur-md p-8 rounded-[2rem] shadow-xl border border-slate-100 mb-8 transition-all hover:shadow-2xl">
+            <div class="text-4xl shrink-0">✈️</div>
+            <div>
+                <h3 class="text-xl font-bold text-slate-800 mb-3">Air Travel (Short vs Long Haul)</h3>
+                <p class="text-slate-600 leading-relaxed">Aviation impact is categorized by distance. <span class="bg-green-100 text-green-800 px-2 py-1 rounded font-bold">Short-Haul flights (&lt; 700 miles)</span> have high emissions per mile due to the energy required for takeoff and landing. <span class="bg-green-100 text-green-800 px-2 py-1 rounded font-bold">Long-Haul flights (&gt; 2,500 miles)</span> use massive amounts of fuel but are slightly more efficient per mile once at cruising altitude.</p>
+                <div class="mt-6 bg-slate-50 border-l-4 border-green-500 p-4 rounded-r-xl">
+                    <h4 class="text-sm font-black uppercase tracking-wider text-green-700 mb-1">Logging Accuracy</h4>
+                    <p class="text-sm text-slate-700">When logging, use the total miles provided by your airline ticket, not just a straight line on a map. For reference, a long-haul flight from NYC to London (3,400 miles) generates nearly <strong>1,000 kg of CO2</strong> per passenger.</p>
                 </div>
             </div>
         </section>
@@ -66,17 +64,28 @@
 </div>
 
 <script type="text/babel">
+  window.currentUserName = "{{ session.user_name }}";
   const root = ReactDOM.createRoot(document.getElementById('pill-nav-root'));
+  
+  const navItems = [
+      { label: 'Dashboard', href: '/' },
+      { label: 'User Guide', href: '/guide' },
+      { label: 'Logout', href: '/logout' },
+      { label: `Hi, ${window.currentUserName || 'User'}`, href: '#', isUser: true }
+  ];
+
   root.render(
-    <PillNav 
-      items={[
-        { label: 'Dashboard', href: '/' },
-        { label: 'User Guide', href: '/guide' },
-        { label: 'Logout', href: '/logout' },
-        { label: 'Hi, Connor Raatz', href: '#', isUser: true }
-      ]} 
-      activeHref="/guide"
-    />
+    <header className="sticky top-0 z-50 flex justify-center w-full py-4 px-6">
+        {window.PillNav ? (
+            <div className="flex items-center justify-center">
+                <window.PillNav items={navItems} activeHref="/guide" pillColor="#2e7d32" />
+            </div>
+        ) : (
+            <div className="bg-white/80 px-6 py-2 rounded-full shadow-sm text-green-700 animate-pulse font-bold">
+                Loading Navigation...
+            </div>
+        )}
+    </header>
   );
 </script>
 {% endblock %}

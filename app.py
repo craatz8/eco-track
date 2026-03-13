@@ -23,9 +23,10 @@ def login():
             session['user_id'] = user['id']
             session['user_name'] = user['name']
             return redirect(url_for('index'))
-        
-        return "Invalid email or password", 401
-        
+        else:
+            flash("Invalid email or password. Please try again.", "error")
+            return render_template('login.html'), 401
+
     return render_template('login.html')
 
 @app.route('/logout')
@@ -70,7 +71,8 @@ def register():
         if existing_user:
             cur.close()
             conn.close()
-            return "Email already registered. Try logging in!", 400
+            flash("Email already registered. Try logging in!", "error")
+            return render_template('register.html'), 400
 
         # 2. Hash the password for security
         hashed_pw = generate_password_hash(password)

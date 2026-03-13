@@ -191,14 +191,7 @@
 
 body.simple-bg::before, 
 body.simple-bg::after {
-  content: "";
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(80px);
-  z-index: -1;
-  opacity: 0.4;
-  animation: float 20s infinite alternate ease-in-out;
-  display: block; /* Show them */
+    display: none !important; /* Ensure they are hidden when simple mode is active */
 }
 
 /* Hide them by default so they don't fight with the animation */
@@ -217,9 +210,10 @@ body {
 
 /* When simple mode is on, apply the static gradient */
 body.simple-bg {
-  background: linear-gradient(135deg, #f1f8e9 0%, #ffffff 100%);
-  background-attachment: fixed;
+    background: linear-gradient(to top, #f0fdf4 0%, #ffffff 100%); /* green-50 to white */
+    background-attachment: fixed;
 }
+
 @keyframes float {
   from { transform: translate(0, 0); }
   to { transform: translate(50px, 100px); }
@@ -552,4 +546,44 @@ input:checked + .slider:before { transform: translateX(26px); }
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 1px;
+}
+
+/* Custom palette for better contrast */
+:root {
+    --eco-dark: #1b4332;   /* Deep forest for text */
+    --eco-green: #2d6a4f;  /* Main action green */
+    --eco-accent: #74c69d; /* Soft accent green */
+    --eco-bg: #f0fdf4;     /* The soft green-white hue */
+}
+
+/* Enhanced Glassmorphism for cards */
+.glass-card {
+    background: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03);
+}
+
+/* Refined Hero Gradient (more depth) */
+.hero-gradient {
+    background: radial-gradient(circle at top left, #2d6a4f, #1b4332);
+}
+
+@keyframes eco-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2); }
+    50% { transform: scale(1.03); box-shadow: 0 0 30px 10px rgba(255, 255, 255, 0.05); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2); }
+}
+
+@keyframes burn-flicker {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; }
+    100% { opacity: 0.8; }
+}
+
+/* Use this for the inner glow when over goal */
+.burning-glow {
+    animation: burn-flicker 2s infinite alternate;
+    background: radial-gradient(circle, rgba(220, 38, 38, 0.2) 0%, transparent 70%);
 }

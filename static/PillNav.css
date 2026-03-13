@@ -128,3 +128,45 @@
   color: var(--hover-text);
   opacity: 0;             /* Hidden until JS animation triggers */
 }
+
+/* --- THE HAMMER FIX: Force Width & Prevent Squishing --- */
+
+/* 1. Force the outer container to match the Dashboard card exactly */
+.pill-nav-container {
+    width: 1152px !important; /* The exact width of max-w-6xl */
+    max-width: 95vw !important; /* Safety for smaller screens */
+    margin: 20px auto !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+/* 2. Force the Dark Bar to be the full width of its parent */
+.pill-nav {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+/* 3. Force the items to spread out and NEVER shrink */
+.pill-nav-items {
+    flex-grow: 1 !important;
+    display: flex !important;
+    width: auto !important;
+}
+
+.pill-list {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+}
+
+.pill-list li {
+    flex: 1 0 auto !important; /* Grow if needed, but NEVER shrink below content size */
+}
+
+.pill {
+    padding: 0 25px !important;
+    min-width: max-content !important; /* This stops "DASH" and "LOG" from happening */
+    width: 100% !important;
+}
