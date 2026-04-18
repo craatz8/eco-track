@@ -1,6 +1,7 @@
 from flask import Flask, flash, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_conn
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = "carbon-secret-key" # Secret key for sessions
@@ -130,16 +131,22 @@ def add_log():
         print(f"DEBUG ERROR: {e}")
         return jsonify({"status": "Error", "message": str(e)}), 400
     
+from datetime import datetime, timedelta
+
 @app.route('/api/user-stats')
 def user_stats():
     if 'user_id' not in session:
         return jsonify({"status": "Error", "message": "Unauthorized"}), 401
     
+    # Get parameters for historical views (e.g. ?month=3&year=2026)
+    month = request.args.get('month')
+    year = request.args.get('year')
+    
     try:
         conn = get_conn()
         cur = conn.cursor(dictionary=True)
-        # Use COALESCE to ensure we return 0 instead of None/Null
-        query = """
+        
+        base_query = """
             SELECT 
                 COALESCE(SUM(ul.amount * af.co2_per_unit), 0) AS total_co2,
                 COUNT(ul.id) AS total_entries
@@ -147,7 +154,21 @@ def user_stats():
             JOIN activity_factors af ON ul.activity_id = af.id
             WHERE ul.user_id = %s
         """
-        cur.execute(query, (session['user_id'],))
+        
+        if month and year:
+            # HISTORICAL VIEW: Filter by Month and Year
+            query = base_query + " AND MONTH(ul.log_date) = %s AND YEAR(ul.log_date) = %s"
+            cur.execute(query, (session['user_id'], month, year))
+        else:
+            # WEEKLY RESET LOGIC: Default to current week (starting Monday)
+            now = datetime.now()
+            start_of_week = now - timedelta(days=now.weekday())
+            # We set the time to 00:00:00 of Monday
+            monday_start = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+            
+            query = base_query + " AND ul.log_date >= %s"
+            cur.execute(query, (session['user_id'], monday_start))
+
         stats = cur.fetchone()
         cur.close()
         conn.close()
@@ -233,6 +254,53 @@ def reset_logs():
         return jsonify({"status": "Success", "message": "Your logs have been reset."})
     except Exception as e:
         return jsonify({"status": "Error", "message": str(e)}), 500
+
+@app.route('/profile')
+def profile():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    return render_template('profile.html', name=session.get('user_name'))
+
+@app.route('/api/projections')
+def get_projections():
+    if 'user_id' not in session:
+        return jsonify({"status": "Error"}), 401
+    
+    try:
+        conn = get_conn()
+        cur = conn.cursor(dictionary=True)
+        
+        # Get total for current month and how many days have passed
+        now = datetime.now()
+        day_of_month = now.day
+        days_in_month = 30 # Simplified or use calendar.monthrange
+        
+        query = """
+            SELECT COALESCE(SUM(ul.amount * af.co2_per_unit), 0) AS current_month_total
+            FROM user_logs ul
+            JOIN activity_factors af ON ul.activity_id = af.id
+            WHERE ul.user_id = %s 
+            AND MONTH(ul.log_date) = %s AND YEAR(ul.log_date) = %s
+        """
+        cur.execute(query, (session['user_id'], now.month, now.year))
+        result = cur.fetchone()
+        
+        total_so_far = result['current_month_total']
+        
+        # Simple Linear Projection: (Total / Days Passed) * Total Days in Month
+        projected_total = (total_so_far / day_of_month) * days_in_month
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            "status": "Success",
+            "current_total": total_so_far,
+            "projected_total": round(projected_total, 2),
+            "days_remaining": days_in_month - day_of_month
+        })
+    except Exception as e:
+        return jsonify({"status": "Error", "message": str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

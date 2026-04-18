@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div id="profile-root"></div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        window.currentUserName = "{{ session.user_name }}";
+    </script>
+
+    <script src="{{ url_for('static', filename='components/LiquidEther.js') }}" type="text/babel"></script>
+    <script src="{{ url_for('static', filename='components/PillNav.js') }}" type="text/babel"></script>
+    
+    <script src="{{ url_for('static', filename='components/profile.js') }}" type="text/babel"></script>
+{% endblock %}

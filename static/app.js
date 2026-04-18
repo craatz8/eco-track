@@ -31,7 +31,7 @@ function Dashboard() {
         { label: 'Dashboard', href: '/' },
         { label: 'User Guide', href: '/guide' },
         { label: 'Logout', href: '/logout' },
-        { label: `Hi, ${window.currentUserName || 'User'}`, href: '#', isUser: true }
+        { label: `Hi, ${window.currentUserName || 'User'}`, href: '/profile', isUser: true }
     ];
 
     // --- EFFECTS & API ---
