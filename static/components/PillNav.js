@@ -18,7 +18,7 @@ const PillNav = ({
   useEffect(() => {
     const layout = () => {
       circleRefs.current.forEach(circle => {
-        if (!circle?.parentElement) return;
+      if (!circle || !circle.parentElement) return;
         const pill = circle.parentElement;
         const rect = pill.getBoundingClientRect();
         const { width: w, height: h } = rect;
@@ -65,7 +65,7 @@ const PillNav = ({
 
         <div className="pill-nav-items desktop-only">
             <ul className="pill-list">
-            {items.map((item, i) => (
+            {items?.map((item, i) => (
                 <li key={item.href || i}>
                 <a 
                     href={item.href} 

@@ -31,7 +31,15 @@ CREATE TABLE user_logs (
     activity_id INT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     log_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    -- These "Foreign Keys" link your tables together professionally
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (activity_id) REFERENCES activity_factors(id)
+);
+
+CREATE TABLE user_forest (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    species VARCHAR(100),
+    location VARCHAR(100),
+    date_planted DATE,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );

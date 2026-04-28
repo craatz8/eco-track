@@ -4,6 +4,7 @@ from db import get_conn
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 app.secret_key = "carbon-secret-key" # Secret key for sessions
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -301,6 +302,114 @@ def get_projections():
         })
     except Exception as e:
         return jsonify({"status": "Error", "message": str(e)})
+
+@app.route('/forest')
+def forest_page():
+    # Force login to protect the forest
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('forest.html')
+
+@app.route('/api/user-forest', methods=['GET', 'POST', 'PUT', 'DELETE'])
+def handle_forest():
+    if 'user_id' not in session:
+        return jsonify({"status": "Error", "message": "Unauthorized"}), 401
+    
+    conn = get_conn()
+    cur = conn.cursor(dictionary=True)
+
+    try:
+        # ---------------------------------------------------------
+        # 1. CREATE (POST)
+        # ---------------------------------------------------------
+        if request.method == 'POST':
+            data = request.json
+            species = data.get('species')
+            location_name = data.get('location_name')
+            lat = data.get('lat')
+            lng = data.get('lng')
+
+            if not all([species, lat, lng]):
+                return jsonify({"status": "Error", "message": "Missing required fields"}), 400
+
+            query = """
+                INSERT INTO user_forest (user_id, species, location_name, lat, lng, date_planted)
+                VALUES (%s, %s, %s, %s, %s, CURDATE())
+            """
+            cur.execute(query, (session['user_id'], species, location_name, lat, lng))
+            conn.commit()
+            return jsonify({"status": "Success", "message": "Tree successfully planted!"})
+
+        # ---------------------------------------------------------
+        # 2. UPDATE (PUT)
+        # ---------------------------------------------------------
+        elif request.method == 'PUT':
+            data = request.json
+            tree_id = data.get('id')
+            lat = data.get('lat')
+            lng = data.get('lng')
+            new_species = data.get('species')
+            new_location = data.get('location_name')
+
+            if tree_id:
+                cur.execute("""
+                    UPDATE user_forest 
+                    SET species = %s, location_name = %s 
+                    WHERE id = %s AND user_id = %s
+                """, (new_species, new_location, tree_id, session['user_id']))
+            else:
+                cur.execute("""
+                    UPDATE user_forest 
+                    SET species = %s, location_name = %s 
+                    WHERE lat = %s AND lng = %s AND user_id = %s
+                """, (new_species, new_location, lat, lng, session['user_id']))
+            
+            conn.commit()
+            return jsonify({"status": "success", "message": "Tree successfully updated."}), 200
+
+        # ---------------------------------------------------------
+        # 3. DELETE (DELETE)
+        # ---------------------------------------------------------
+        elif request.method == 'DELETE':
+            data = request.json
+            tree_id = data.get('id')
+            lat = data.get('lat')
+            lng = data.get('lng')
+
+            if tree_id:
+                cur.execute("DELETE FROM user_forest WHERE id = %s AND user_id = %s", (tree_id, session['user_id']))
+            else:
+                cur.execute("DELETE FROM user_forest WHERE lat = %s AND lng = %s AND user_id = %s", (lat, lng, session['user_id']))
+            
+            conn.commit()
+            return jsonify({"status": "success", "message": "Tree successfully removed."}), 200
+
+        # ---------------------------------------------------------
+        # 4. READ (GET) - Default Fallthrough
+        # ---------------------------------------------------------
+        elif request.method == 'GET':
+            cur.execute("""
+                SELECT id, species, location_name, lat, lng, date_planted 
+                FROM user_forest 
+                WHERE user_id = %s
+            """, (session['user_id'],))
+            
+            trees = cur.fetchall()
+            
+            for tree in trees:
+                tree['lat'] = float(tree['lat'])
+                tree['lng'] = float(tree['lng'])
+                tree['date_planted'] = tree['date_planted'].strftime('%Y-%m-%d') if tree['date_planted'] else None
+
+            return jsonify({"status": "Success", "trees": trees})
+
+    except Exception as e:
+        print(f"Database Error: {e}")
+        return jsonify({"status": "Error", "message": str(e)}), 500
+    finally:
+        cur.close()
+        conn.close()
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

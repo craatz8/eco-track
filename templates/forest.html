@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="forest-root">
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel" data-presets="env,react,typescript" src="{{ url_for('static', filename='components/PillNav.js') }}"></script>
+    
+    <script type="text/babel" data-presets="env,react,typescript" data-cache="false" src="{{ url_for('static', filename='components/EcoGlobe.js') }}"></script>
+
+    <script type="text/babel" data-presets="env,react,typescript">
+        ReactDOM.render(<ForestGlobe />, document.getElementById('forest-root'));
+    </script>
+    <script>
+        window.currentUserName = "{{ session.user_name }}";
+    </script>
+{% endblock %}

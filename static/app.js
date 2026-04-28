@@ -29,6 +29,7 @@ function Dashboard() {
 
     const navItems = [
         { label: 'Dashboard', href: '/' },
+        { label: 'My Forest', href: '/forest' },
         { label: 'User Guide', href: '/guide' },
         { label: 'Logout', href: '/logout' },
         { label: `Hi, ${window.currentUserName || 'User'}`, href: '/profile', isUser: true }
@@ -160,7 +161,21 @@ function Dashboard() {
         return `hsl(${hue}, 50%, 25%)`;
     };
 
-const dynamicBgColor = calculateHeatColor(ratio);
+    const getResetDate = () => {
+        const now = new Date();
+        const nextMonday = new Date();
+        // Calculate days until next Monday (1)
+        const daysToMonday = (1 - now.getDay() + 7) % 7 || 7;
+        nextMonday.setDate(now.getDate() + daysToMonday);
+        
+        return nextMonday.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+    };
+
+    const dynamicBgColor = calculateHeatColor(ratio);
     return (
         <div className="relative min-h-screen font-sans text-slate-900 pb-20">
             {/* 1. NAVIGATION */}
@@ -274,6 +289,14 @@ const dynamicBgColor = calculateHeatColor(ratio);
 
                     <div className="w-full bg-slate-200 rounded-full h-4 overflow-hidden shadow-inner">
                         <div className={`h-full transition-all duration-1000 ease-out ${barColor}`} style={{ width: `${percentage}%` }}></div>
+                    </div>
+
+                    {/* DATE AWARE RESET NOTE */}
+                    <div className="mt-4 flex items-center gap-2 text-slate-500">
+                        <span className="text-xs font-bold uppercase tracking-tighter bg-slate-200 px-2 py-1 rounded-md">Schedule</span>
+                        <p className="text-sm font-medium">
+                            Your limit resets on <span className="text-slate-900 font-bold">{getResetDate()}</span>
+                        </p>
                     </div>
                 </div>
 

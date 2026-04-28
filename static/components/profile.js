@@ -5,7 +5,8 @@ function ImpactChart() {
     const chartRef = React.useRef(null);
     const [range, setRange] = React.useState(1); 
     const [type, setType] = React.useState('line'); 
-    const [isCumulative, setIsCumulative] = React.useState(true); // New Toggle State
+    const [isCumulative, setIsCumulative] = React.useState(true);
+    const [granularity, setGranularity] = React.useState('auto'); // 'auto', 'day', 'month'
     
     const [customDates, setCustomDates] = React.useState({ start: '', end: '' });
     const [isCustom, setIsCustom] = React.useState(false);
@@ -33,7 +34,9 @@ function ImpactChart() {
 
                     const diffTime = Math.abs(endDate - startDate);
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    const useMonthly = diffDays > 62; 
+                    
+                    // Logic: Use Monthly view if set to month, or if auto-calc is > 31 days
+                    const useMonthly = granularity === 'month' || (granularity === 'auto' && diffDays > 31); 
 
                     let labels = [];
                     let rawKeys = [];
@@ -41,12 +44,16 @@ function ImpactChart() {
 
                     let current = new Date(startDate);
                     while (current <= endDate) {
+                        // FIX: Ensure 4-digit year (numeric)
                         let key = useMonthly 
-                            ? current.toLocaleString('default', { month: 'short', year: '2-digit' })
+                            ? current.toLocaleString('default', { month: 'short', year: 'numeric' })
                             : `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
                         
                         if (!aggregatedData.hasOwnProperty(key)) {
-                            labels.push(useMonthly ? key : current.toLocaleDateString('default', { month: 'short', day: 'numeric' }));
+                            labels.push(useMonthly 
+                                ? current.toLocaleString('default', { month: 'short', year: 'numeric' }) 
+                                : current.toLocaleDateString('default', { month: 'short', day: 'numeric' })
+                            );
                             rawKeys.push(key);
                             aggregatedData[key] = 0;
                         }
@@ -60,16 +67,17 @@ function ImpactChart() {
                     }
 
                     data.logs.forEach(log => {
-                        const logDate = new Date(log.date);
+                        const logDate = new Date(log.log_date || log.date);
                         if (logDate >= startDate && logDate <= endDate) {
                             const key = useMonthly 
-                                ? logDate.toLocaleString('default', { month: 'short', year: '2-digit' })
+                                ? logDate.toLocaleString('default', { month: 'short', year: 'numeric' })
                                 : `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`;
-                            if (aggregatedData.hasOwnProperty(key)) aggregatedData[key] += log.total_co2;
+                            
+                            const val = log.total_co2 || (log.amount * (log.co2_per_unit || 0));
+                            if (aggregatedData.hasOwnProperty(key)) aggregatedData[key] += val;
                         }
                     });
 
-                    // CUMULATIVE VS INSTANT LOGIC
                     let runningTotal = 0;
                     const plotValues = rawKeys.map(key => {
                         if (isCumulative) {
@@ -86,7 +94,7 @@ function ImpactChart() {
                         data: {
                             labels: labels,
                             datasets: [{
-                                label: isCumulative ? 'Total Footprint' : 'Daily/Monthly Activity',
+                                label: isCumulative ? 'Total Footprint' : 'Activity',
                                 data: plotValues,
                                 backgroundColor: type === 'bar' ? '#15803d' : 'rgba(21, 128, 61, 0.1)',
                                 borderColor: '#15803d',
@@ -103,13 +111,13 @@ function ImpactChart() {
                             plugins: { legend: { display: false } },
                             scales: {
                                 y: { beginAtZero: true, title: { display: true, text: 'CO2 (kg)', font: { weight: 'bold' } } },
-                                x: { ticks: { maxTicksLimit: useMonthly ? 12 : 10 } }
+                                x: { ticks: { maxTicksLimit: 12 } }
                             }
                         }
                     });
                 }
             });
-    }, [range, type, isCustom, customDates, isCumulative]);
+    }, [range, type, isCustom, customDates, isCumulative, granularity]);
 
     return (
         <div className="mt-10 p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 shadow-inner">
@@ -117,23 +125,28 @@ function ImpactChart() {
                 <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Impact Analytics</h4>
                 
                 <div className="flex flex-wrap justify-center items-center gap-4">
-                    {/* Date Inputs */}
-                    <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
+                    {/* Custom Range Selector */}
+                    <div className={`flex items-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border transition-all duration-300 ${isCustom ? 'border-emerald-500 ring-4 ring-emerald-500/10' : 'border-slate-200'}`}>
                         <input type="date" className="text-xs font-bold text-slate-500 bg-transparent outline-none px-2"
+                            value={customDates.start}
                             onChange={(e) => setCustomDates({...customDates, start: e.target.value})} />
                         <span className="text-slate-300 font-black">→</span>
                         <input type="date" className="text-xs font-bold text-slate-500 bg-transparent outline-none px-2"
+                            value={customDates.end}
                             onChange={(e) => setCustomDates({...customDates, end: e.target.value})} />
-                        <button onClick={() => setIsCustom(true)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${isCustom ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>
-                            Apply
+                        <button 
+                            onClick={() => { setIsCustom(true); setGranularity('auto'); }}
+                            className={`px-4 py-2 rounded-xl text-xs font-black transition-all border ${isCustom 
+                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' 
+                                : 'bg-white text-emerald-700 border-emerald-200 hover:border-emerald-400 shadow-sm'}`}>
+                            APPLY
                         </button>
                     </div>
 
-                    {/* Controls & Toggles */}
+                    {/* Presets, Granularity, and Toggles */}
                     <div className="flex flex-wrap items-center justify-center gap-2 bg-white p-1.5 rounded-2xl shadow-sm border border-slate-100">
                         {[1, 3, 6, 12].map(m => (
-                            <button key={m} onClick={() => { setIsCustom(false); setRange(m); }}
+                            <button key={m} onClick={() => { setIsCustom(false); setRange(m); setGranularity('auto'); }}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${(!isCustom && range === m) ? 'bg-green-700 text-white shadow-md' : 'text-slate-400 hover:bg-slate-50'}`}>
                                 {m === 12 ? '1Y' : m === 1 ? '1M' : `${m}M`}
                             </button>
@@ -141,7 +154,17 @@ function ImpactChart() {
                         
                         <div className="w-[1px] bg-slate-100 h-6 mx-1"></div>
 
-                        {/* Cumulative Toggle */}
+                        {/* Granularity Picker */}
+                        <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                            <button onClick={() => setGranularity('day')}
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${granularity === 'day' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-400'}`}>Day</button>
+                            <button onClick={() => setGranularity('month')}
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${granularity === 'month' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-400'}`}>Month</button>
+                        </div>
+
+                        <div className="w-[1px] bg-slate-100 h-6 mx-1"></div>
+
+                        {/* Cumulative / Activity Toggle */}
                         <button onClick={() => setIsCumulative(!isCumulative)}
                             className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${isCumulative ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
                             {isCumulative ? 'Cumulative' : 'Activity'}
@@ -149,8 +172,9 @@ function ImpactChart() {
 
                         <div className="w-[1px] bg-slate-100 h-6 mx-1"></div>
 
-                        <button onClick={() => setType('bar')} className={`p-2 rounded-xl ${type === 'bar' ? 'bg-slate-100 text-green-700' : 'text-slate-300'}`}>📊</button>
-                        <button onClick={() => setType('line')} className={`p-2 rounded-xl ${type === 'line' ? 'bg-slate-100 text-green-700' : 'text-slate-300'}`}>📈</button>
+                        {/* Chart Type Icons */}
+                        <button onClick={() => setType('bar')} className={`p-2 rounded-xl transition-colors ${type === 'bar' ? 'bg-slate-100 text-green-700' : 'text-slate-300 hover:text-slate-400'}`}>📊</button>
+                        <button onClick={() => setType('line')} className={`p-2 rounded-xl transition-colors ${type === 'line' ? 'bg-slate-100 text-green-700' : 'text-slate-300 hover:text-slate-400'}`}>📈</button>
                     </div>
                 </div>
             </div>
@@ -162,7 +186,6 @@ function ImpactChart() {
     );
 }
 
-
 function Profile() {
     const [viewDate, setViewDate] = useState({ 
         month: new Date().getMonth() + 1, 
@@ -170,6 +193,12 @@ function Profile() {
     });
     const [stats, setStats] = useState({ total_co2: 0, total_entries: 0 });
     const [projections, setProjections] = useState(null);
+
+    // Logic to read the background preference from localStorage
+    const [isAnimatedBg, setIsAnimatedBg] = useState(() => {
+        const saved = localStorage.getItem('ecoTrack_animatedBg');
+        return saved !== null ? JSON.parse(saved) : true;
+    });
 
     const navItems = [
         { label: 'Dashboard', href: '/' },
@@ -202,14 +231,17 @@ function Profile() {
     }, []);
 
     return (
-        <div className="relative min-h-screen pb-20 font-sans">
+        <div className={`relative min-h-screen pb-20 font-sans transition-colors duration-700 ${!isAnimatedBg ? 'bg-slate-50' : ''}`}>
             <header className="sticky top-0 z-50 flex justify-center w-full py-4 px-6">
                 <window.PillNav items={navItems} activeHref="/profile" pillColor="#166534" />
             </header>
             
-            <div className="fixed inset-0 -z-10">
-                <window.LiquidEther colors={['#10b981', '#34d399', '#059669']} autoDemo={true} />
-            </div>
+            {/* Conditional rendering based on isAnimatedBg */}
+            {isAnimatedBg && (
+                <div className="fixed inset-0 -z-10">
+                    <window.LiquidEther colors={['#10b981', '#34d399', '#059669']} autoDemo={true} />
+                </div>
+            )}
 
             <main className="max-w-4xl mx-auto px-6 mt-12">
                 <div className="bg-white/80 backdrop-blur-2xl p-10 rounded-[3.5rem] shadow-2xl border border-white/50">
