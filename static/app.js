@@ -23,6 +23,18 @@ function Dashboard() {
     const [isEditingGoal, setIsEditingGoal] = useState(false);
     const [tempGoal, setTempGoal] = useState(weeklyGoal);
 
+    // ==========================================
+    // 📅 NEW: TABLE FILTER STATES
+    // ==========================================
+    const [filterType, setFilterType] = useState('current_month'); // Default to this month
+    const [customMonth, setCustomMonth] = useState(new Date().getMonth() + 1);
+    const [customYear, setCustomYear] = useState(new Date().getFullYear());
+
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+
     const percentage = Math.min((stats.total_co2 / weeklyGoal) * 100, 100);
     const barColor = percentage > 90 ? 'bg-red-600' : 'bg-green-700';
     const totalCo2 = stats?.total_co2 || 0;
@@ -31,8 +43,8 @@ function Dashboard() {
         { label: 'Dashboard', href: '/' },
         { label: 'My Forest', href: '/forest' },
         { label: 'User Guide', href: '/guide' },
+        { label: `Hi, ${window.currentUserName ? window.currentUserName.split(' ')[0] : 'User'}`, href: '/profile', isUser: true },
         { label: 'Logout', href: '/logout' },
-        { label: `Hi, ${window.currentUserName || 'User'}`, href: '/profile', isUser: true }
     ];
 
     // --- EFFECTS & API ---
@@ -133,11 +145,11 @@ function Dashboard() {
     };
 
     const scrollToTracker = () => {
-      const tracker = document.getElementById('total-footprint-card');
+      const tracker = document.getElementById('history-section');
       if (tracker) {
           tracker.scrollIntoView({ 
               behavior: 'smooth', 
-              block: 'center' // Centers the card in the viewport
+              block: 'start' 
           });
       }
     };
@@ -147,16 +159,11 @@ function Dashboard() {
     const ratio = totalCo2 / weeklyGoal;
 
     const calculateHeatColor = (r) => {
-        // Default Base Green
         if (r <= 0.1) return 'hsl(153, 42%, 18%)'; 
-
-        // OVER GOAL: Transition from Red to Darker "Burnt" Red
         if (r > 1) {
             const burnIntensity = Math.min((r - 1) * 20, 15); 
             return `hsl(0, 70%, ${25 - burnIntensity}%)`;
         }
-
-        // TOWARD GOAL: Green -> Yellow -> Red
         const hue = Math.max(0, 150 - (r * 150));
         return `hsl(${hue}, 50%, 25%)`;
     };
@@ -164,7 +171,6 @@ function Dashboard() {
     const getResetDate = () => {
         const now = new Date();
         const nextMonday = new Date();
-        // Calculate days until next Monday (1)
         const daysToMonday = (1 - now.getDay() + 7) % 7 || 7;
         nextMonday.setDate(now.getDate() + daysToMonday);
         
@@ -174,6 +180,42 @@ function Dashboard() {
             day: 'numeric' 
         });
     };
+
+    // ==========================================
+    // 🔍 TABLE FILTERING LOGIC
+    // ==========================================
+    const filteredLogs = logs.filter(log => {
+        const logDate = new Date(log.date || log.log_date);
+        const now = new Date();
+
+        if (filterType === 'current_month') {
+            return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
+        }
+        if (filterType === '1m') {
+            const past = new Date();
+            past.setMonth(now.getMonth() - 1);
+            return logDate >= past;
+        }
+        if (filterType === '3m') {
+            const past = new Date();
+            past.setMonth(now.getMonth() - 3);
+            return logDate >= past;
+        }
+        if (filterType === '6m') {
+            const past = new Date();
+            past.setMonth(now.getMonth() - 6);
+            return logDate >= past;
+        }
+        if (filterType === '1y') {
+            const past = new Date();
+            past.setFullYear(now.getFullYear() - 1);
+            return logDate >= past;
+        }
+        if (filterType === 'custom_month') {
+            return logDate.getMonth() + 1 === customMonth && logDate.getFullYear() === customYear;
+        }
+        return true; // 'all'
+    });
 
     const dynamicBgColor = calculateHeatColor(ratio);
     return (
@@ -233,14 +275,12 @@ function Dashboard() {
                     background: `radial-gradient(circle at top left, ${dynamicBgColor}, #0a1a14)` 
                   }}
               >
-                  {/* Subtle Decorative Elements */}
                   <div className="absolute -top-20 -left-20 w-64 h-64 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-700"></div>
                   
                   <h2 className="text-white/70 uppercase tracking-[0.2em] font-black text-xs mb-8">
                       {totalCo2 > weeklyGoal ? "⚠️ Goal Exceeded" : "Global Impact Summary"}
                   </h2>
 
-                  {/* CORE STAT: AnimatedNumber & Pulse */}
                   <div 
                       className="relative mx-auto flex h-60 w-60 flex-col items-center justify-center rounded-full border-8 border-white/10 bg-white/5 backdrop-blur-md"
                       style={{ 
@@ -254,7 +294,6 @@ function Dashboard() {
                       <div className="text-white/60 font-bold text-[10px] uppercase tracking-widest mt-1">kg CO2e</div>
                   </div>
 
-                  {/* SCROLL BUTTON */}
                   <div 
                       onClick={() => document.getElementById('history-section')?.scrollIntoView({ behavior: 'smooth' })} 
                       className="mt-10 inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white px-8 py-3 rounded-full text-sm font-bold cursor-pointer transition-all"
@@ -291,7 +330,6 @@ function Dashboard() {
                         <div className={`h-full transition-all duration-1000 ease-out ${barColor}`} style={{ width: `${percentage}%` }}></div>
                     </div>
 
-                    {/* DATE AWARE RESET NOTE */}
                     <div className="mt-4 flex items-center gap-2 text-slate-500">
                         <span className="text-xs font-bold uppercase tracking-tighter bg-slate-200 px-2 py-1 rounded-md">Schedule</span>
                         <p className="text-sm font-medium">
@@ -344,10 +382,54 @@ function Dashboard() {
                 <section id="history-section" className="mt-16 bg-white/90 backdrop-blur-md rounded-[2.5rem] shadow-2xl border border-white overflow-hidden">
                     <div className="p-8 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4">
                         <h3 className="text-2xl font-black text-green-800 tracking-tight">Recent History</h3>
-                        <button className="px-6 py-2 rounded-full border-2 border-red-100 text-red-500 font-bold text-sm hover:bg-red-500 hover:text-white transition-all" onClick={resetAllLogs}>
-                            🗑️ Reset All Logs
-                        </button>
+                        
+                        <div className="flex flex-wrap items-center gap-3">
+                            {/* FILTER CONTROLS */}
+                            <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200">
+                                <select 
+                                    className="bg-white border border-slate-100 text-slate-700 font-bold py-2 px-3 rounded-xl outline-none focus:border-green-600 shadow-sm text-sm"
+                                    value={filterType}
+                                    onChange={(e) => setFilterType(e.target.value)}
+                                >
+                                    <option value="current_month">This Month</option>
+                                    <option value="1m">Last Month</option>
+                                    <option value="3m">Last 3 Months</option>
+                                    <option value="6m">Last 6 Months</option>
+                                    <option value="1y">This Year</option>
+                                    <option value="custom_month">Specific Month</option>
+                                    <option value="all">All Time</option>
+                                </select>
+
+                                {filterType === 'custom_month' && (
+                                    <>
+                                        <select 
+                                            className="bg-white border border-slate-100 text-slate-700 font-bold py-2 px-3 rounded-xl outline-none focus:border-green-600 shadow-sm text-sm"
+                                            value={customMonth}
+                                            onChange={(e) => setCustomMonth(Number(e.target.value))}
+                                        >
+                                            {months.map((name, i) => (
+                                                <option key={i} value={i + 1}>{name}</option>
+                                            ))}
+                                        </select>
+                                        <select 
+                                            className="bg-white border border-slate-100 text-slate-700 font-bold py-2 px-3 rounded-xl outline-none focus:border-green-600 shadow-sm text-sm"
+                                            value={customYear}
+                                            onChange={(e) => setCustomYear(Number(e.target.value))}
+                                        >
+                                            {[2024, 2025, 2026].map(y => (
+                                                <option key={y} value={y}>{y}</option>
+                                            ))}
+                                        </select>
+                                    </>
+                                )}
+                            </div>
+                            
+                            <button className="px-6 py-2.5 rounded-2xl border border-red-200 bg-red-50 text-red-600 font-bold text-sm hover:bg-red-500 hover:text-white hover:border-red-500 transition-all shadow-sm" onClick={resetAllLogs}>
+                                🗑️ Reset All
+                            </button>
+                        </div>
                     </div>
+                    
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
@@ -360,9 +442,9 @@ function Dashboard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                {logs.length > 0 ? logs.map(log => (
+                                {filteredLogs.length > 0 ? filteredLogs.map(log => (
                                     <tr key={log.id} className="hover:bg-green-50/30 transition-colors group">
-                                        <td className="p-6 text-slate-400 text-sm">{log.date}</td>
+                                        <td className="p-6 text-slate-500 text-sm font-medium">{log.date}</td>
                                         <td className="p-6 font-bold text-slate-800">{log.activity_name}</td>
                                         <td className="p-6">
                                             {editingId === log.id ? 
@@ -374,13 +456,13 @@ function Dashboard() {
                                             <div className="flex justify-center gap-2">
                                                 {editingId === log.id ? 
                                                     <button className="w-9 h-9 flex items-center justify-center bg-green-100 text-green-700 rounded-full hover:bg-green-700 hover:text-white transition-all" onClick={() => saveEdit(log.id)}>💾</button> 
-                                                    : <button className="w-9 h-9 flex items-center justify-center bg-slate-100 text-slate-500 rounded-full hover:bg-green-700 hover:text-white transition-all" onClick={() => {setEditingId(log.id); setEditValue(log.amount);}}>✏️</button>}
-                                                <button className="w-9 h-9 flex items-center justify-center bg-slate-100 text-slate-500 rounded-full hover:bg-red-500 hover:text-white transition-all" onClick={() => deleteLog(log.id)}>🗑️</button>
+                                                    : <button className="w-9 h-9 flex items-center justify-center bg-slate-100 text-slate-500 rounded-full hover:bg-green-700 hover:text-white transition-all opacity-0 group-hover:opacity-100" onClick={() => {setEditingId(log.id); setEditValue(log.amount);}}>✏️</button>}
+                                                <button className="w-9 h-9 flex items-center justify-center bg-slate-100 text-slate-500 rounded-full hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100" onClick={() => deleteLog(log.id)}>🗑️</button>
                                             </div>
                                         </td>
                                     </tr>
                                 )) : (
-                                    <tr><td colSpan="5" className="p-20 text-center text-slate-400 font-medium">🌿 No activities logged yet. Start by adding one above!</td></tr>
+                                    <tr><td colSpan="5" className="p-20 text-center text-slate-400 font-medium">🌿 No activities found for this time period.</td></tr>
                                 )}
                             </tbody>
                         </table>

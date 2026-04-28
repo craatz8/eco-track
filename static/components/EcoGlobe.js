@@ -387,9 +387,9 @@ function ForestGlobe() {
                                 { label: 'Dashboard', href: '/' },
                                 { label: 'My Forest', href: '/forest' },
                                 { label: 'User Guide', href: '/guide' },
-                                { label: 'Logout', href: '/logout' },
-                                { label: `Hi, ${window.currentUserName || 'User'}`, href: '/profile', isUser: true }
-                            ]} 
+                                { label: `Hi, ${window.currentUserName ? window.currentUserName.split(' ')[0] : 'User'}`, href: '/profile', isUser: true },
+                                { label: 'Logout', href: '/logout' }
+                            ]}
                             activeHref="/forest" 
                             pillColor="#1e6d3a" 
                         />
@@ -551,7 +551,7 @@ function ForestGlobe() {
                                     <input 
                                         className="w-full p-4 bg-slate-50 rounded-xl font-bold outline-none border-2 border-transparent focus:border-[#1e6d3a] text-[#141c2b]" 
                                         value={form.location_name}
-                                        placeholder="e.g. Front Yard" 
+                                        placeholder="e.g. Lincoln, Nebraska" 
                                         onChange={handleLocationSearch} 
                                         onBlur={() => setTimeout(() => setSuggestions([]), 200)}
                                     />
@@ -647,7 +647,7 @@ function ForestGlobe() {
                                     </div>
                                     <input 
                                         className="w-full p-5 bg-slate-50 rounded-[1.5rem] font-bold outline-none border-2 border-transparent focus:border-[#1e6d3a] transition-colors text-[#141c2b]" 
-                                        placeholder="e.g. Lincoln" 
+                                        placeholder="e.g. Lincoln, Nebraska" 
                                         value={form.location_name}
                                         onChange={handleLocationSearch} 
                                         onBlur={() => setTimeout(() => setSuggestions([]), 200)}
