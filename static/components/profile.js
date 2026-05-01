@@ -1,6 +1,6 @@
 const { useState, useEffect } = React;
 
-function ImpactChart() {
+function ImpactChart({ userId }) {
     const chartRef = React.useRef(null);
     const [range, setRange] = React.useState(1); 
     const [type, setType] = React.useState('line'); 
@@ -24,7 +24,14 @@ function ImpactChart() {
                     } else {
                         endDate = new Date();
                         startDate = new Date();
-                        startDate.setMonth(startDate.getMonth() - range);
+                        
+                        if (range === 1) {
+                            startDate.setMonth(startDate.getMonth() - 1);
+                        } else {
+                            // THE FIX: Set to the 1st of the month FIRST to prevent leap-year overflow
+                            startDate.setDate(1); 
+                            startDate.setMonth(startDate.getMonth() - range + 1);
+                        }
                     }
                     startDate.setHours(0,0,0,0);
                     endDate.setHours(23,59,59,999);
@@ -193,6 +200,28 @@ function Profile() {
     const [editingTreeId, setEditingTreeId] = useState(null);
     const [treeEditForm, setTreeEditForm] = useState({ species: '', location_name: '', lat: '', lng: '' });
 
+    // Account Settings State
+    const [showAccountModal, setShowAccountModal] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    
+    // Extended Form State
+    const [accountForm, setAccountForm] = useState({ 
+        name: '', 
+        oldEmail: '', 
+        newEmail: '', 
+        oldPassword: '', 
+        newPassword: '', 
+        confirmPassword: '' 
+    });
+    const [accountMessage, setAccountMessage] = useState({ text: '', type: '' });
+
+    // Activity Logs Modal State
+    const [showLogsModal, setShowLogsModal] = useState(false);
+    const [monthlyLogs, setMonthlyLogs] = useState([]);
+
+    // Projection Info Modal State
+    const [showProjectionInfo, setShowProjectionInfo] = useState(false);
+
     const [isAnimatedBg, setIsAnimatedBg] = useState(() => {
         const saved = localStorage.getItem('ecoTrack_animatedBg');
         return saved !== null ? JSON.parse(saved) : true;
@@ -202,8 +231,8 @@ function Profile() {
         { label: 'Dashboard', href: '/' },
         { label: 'My Forest', href: '/forest' },
         { label: 'User Guide', href: '/guide' },
-        { label: `Hi, ${window.currentUserName ? window.currentUserName.split(' ')[0] : 'User'}`, href: '/profile', isUser: true },
         { label: 'Logout', href: '/logout' },
+        { label: `Hi, ${window.currentUserName ? window.currentUserName.split(' ')[0] : 'User'}`, href: '/profile', isUser: true }
     ];
 
     const months = [
@@ -243,7 +272,6 @@ function Profile() {
         fetchForest();
     }, []);
 
-    // --- DYNAMIC ACHIEVEMENT ENGINE ---
     const updateAchievements = (forestData) => {
         const count = forestData ? forestData.length : 0;
         let maxAgeDays = 0;
@@ -268,7 +296,6 @@ function Profile() {
             { icon: '🕰️', title: 'Deep Roots', desc: 'Have a tree reach 5 years old', progress: Math.min((maxAgeDays / 1825) * 100, 100) },
         ];
 
-        // Sort: Unlocked first, then by progress percentage
         allAchievements.sort((a, b) => b.progress - a.progress);
         setAchievements(allAchievements);
     };
@@ -329,6 +356,76 @@ function Profile() {
         return `${Math.floor(diffDays / 365)} years old`;
     };
 
+    const handleAccountUpdate = (e) => {
+        e.preventDefault();
+
+        if (accountForm.newPassword && accountForm.newPassword !== accountForm.confirmPassword) {
+            setAccountMessage({ text: 'New passwords do not match.', type: 'error' });
+            return;
+        }
+        if (accountForm.newEmail && !accountForm.oldEmail) {
+            setAccountMessage({ text: 'Please enter your current email to authorize an email change.', type: 'error' });
+            return;
+        }
+        if (accountForm.newPassword && !accountForm.oldPassword) {
+            setAccountMessage({ text: 'Please enter your current password to authorize a password change.', type: 'error' });
+            return;
+        }
+
+        setAccountMessage({ text: 'Updating...', type: '' });
+        
+        fetch('/api/update-account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(accountForm)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "Success") {
+                setAccountMessage({ text: 'Account updated successfully!', type: 'success' });
+                if (data.new_name) window.currentUserName = data.new_name; 
+                setTimeout(() => {
+                    setShowAccountModal(false);
+                    setAccountMessage({ text: '', type: '' });
+                    setAccountForm({ name: '', oldEmail: '', newEmail: '', oldPassword: '', newPassword: '', confirmPassword: '' });
+                }, 2000);
+            } else {
+                setAccountMessage({ text: data.message || 'Failed to update account. Check credentials.', type: 'error' });
+            }
+        })
+        .catch(err => {
+            setAccountMessage({ text: 'An error occurred. Please try again.', type: 'error' });
+        });
+    };
+
+    const handleDeleteAccount = () => {
+        fetch('/api/delete-account', { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "Success") {
+                window.location.href = '/login'; 
+            } else {
+                setAccountMessage({ text: data.message || 'Failed to delete account.', type: 'error' });
+            }
+        });
+    };
+
+    const openLogsModal = () => {
+        setShowLogsModal(true);
+        fetch('/api/user-logs')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "Success") {
+                    const filteredLogs = data.logs.filter(log => {
+                        const logDate = new Date(log.date || log.log_date);
+                        return (logDate.getMonth() + 1) === Number(viewDate.month) && 
+                                logDate.getFullYear() === Number(viewDate.year);
+                    });
+                    setMonthlyLogs(filteredLogs);
+                }
+            });
+    };
+
     return (
         <div className={`relative min-h-screen pb-20 font-sans transition-colors duration-700 ${!isAnimatedBg ? 'bg-slate-50' : ''}`}>
             <header className="sticky top-0 z-50 flex justify-center w-full py-4 px-6">
@@ -341,6 +438,224 @@ function Profile() {
                 </div>
             )}
 
+            {/* --- PROJECTION INFO MODAL --- */}
+            {showProjectionInfo && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white/95 backdrop-blur-2xl w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl border border-white relative">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-black text-green-900 tracking-tight">How is this calculated?</h3>
+                            <button 
+                                onClick={() => setShowProjectionInfo(false)} 
+                                className="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="space-y-4 text-slate-600 font-medium leading-relaxed">
+                            <p>We use a straight-line projection to estimate your end-of-month footprint based on your current habits.</p>
+                            
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 font-mono text-sm text-slate-700 shadow-inner">
+                                <span className="block mb-2">1. <span className="font-bold text-green-700">Daily Average</span> = (Total CO2) ÷ (Days Passed)</span>
+                                <span className="block">2. <span className="font-bold text-green-700">Forecast</span> = (Daily Avg) × (Days in Month)</span>
+                            </div>
+                            
+                            <p className="text-sm bg-green-50 text-green-800 p-4 rounded-xl border border-green-100">
+                                💡 <strong>Example:</strong> If you emit 10kg by the 5th day of a 30-day month, your average is 2kg/day. Your forecast would be 2kg × 30 days = <strong>60kg</strong>.
+                            </p>
+                        </div>
+                        <button onClick={() => setShowProjectionInfo(false)} className="w-full mt-8 bg-green-700 hover:bg-green-800 text-white font-black py-4 rounded-[1rem] shadow-lg transition-all">
+                            GOT IT
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* --- ACTIVITY LOGS BREAKDOWN MODAL --- */}
+            {showLogsModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white/95 backdrop-blur-2xl w-full max-w-2xl p-8 rounded-[2.5rem] shadow-2xl border border-white relative max-h-[85vh] flex flex-col">
+                        
+                        <div className="flex justify-between items-center mb-6 shrink-0">
+                            <div>
+                                <h3 className="text-2xl font-black text-green-900 tracking-tight">Activity Breakdown</h3>
+                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                    {months[viewDate.month - 1]} {viewDate.year}
+                                </p>
+                            </div>
+                            <button 
+                                onClick={() => setShowLogsModal(false)} 
+                                className="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full w-10 h-10 flex items-center justify-center transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="overflow-y-auto flex-1 pr-2 space-y-3">
+                            {monthlyLogs.length > 0 ? (
+                                monthlyLogs.map(log => (
+                                    <div key={log.id} className="bg-slate-50 border border-slate-100 p-5 rounded-2xl flex items-center justify-between hover:bg-green-50/50 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-sm text-xl border border-slate-100">
+                                                {log.activity_name.toLowerCase().includes('beef') ? '🥩' : 
+                                                 log.activity_name.toLowerCase().includes('flight') ? '✈️' : 
+                                                 log.activity_name.toLowerCase().includes('gasoline') ? '🚗' : '⚡'}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-slate-800 text-lg leading-tight">{log.activity_name}</h4>
+                                                <p className="text-xs font-bold text-slate-400 mt-1">{log.date || log.log_date}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-black text-green-700 text-xl">{Number(log.total_co2).toFixed(2)}<span className="text-sm opacity-60">kg</span></p>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                                                Amount: {log.amount}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="py-12 text-center">
+                                    <span className="text-5xl opacity-30 block mb-4">🍃</span>
+                                    <p className="text-slate-500 font-bold">No activities recorded for this month.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- ACCOUNT SETTINGS MODAL --- */}
+            {showAccountModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+                    <div className="bg-white/90 backdrop-blur-xl w-full max-w-lg p-8 rounded-[2rem] shadow-2xl border border-white relative max-h-[90vh] overflow-y-auto">
+                        
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-black text-green-900 tracking-tight">Account Settings</h3>
+                            <button 
+                                onClick={() => {
+                                    setShowAccountModal(false);
+                                    setShowDeleteConfirm(false);
+                                    setAccountMessage({ text: '', type: '' });
+                                }} 
+                                className="text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {accountMessage.text && (
+                            <div className={`p-4 rounded-xl mb-6 text-sm font-bold ${accountMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {accountMessage.text}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleAccountUpdate} className="space-y-6 mb-8">
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Profile Identity</h4>
+                                <input 
+                                    type="text" 
+                                    autoComplete="off"
+                                    className="w-full p-4 rounded-[1rem] bg-white border border-slate-200 focus:border-green-500 outline-none transition-all shadow-sm" 
+                                    placeholder={window.currentUserName || "Update Display Name"} 
+                                    value={accountForm.name} 
+                                    onChange={(e) => setAccountForm({...accountForm, name: e.target.value})} 
+                                />
+                            </div>
+
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-3">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Update Email Address</h4>
+                                <input 
+                                    type="email" 
+                                    autoComplete="off"
+                                    className="w-full p-4 rounded-[1rem] bg-white border border-slate-200 focus:border-green-500 outline-none transition-all shadow-sm" 
+                                    placeholder="Current Email" 
+                                    value={accountForm.oldEmail} 
+                                    onChange={(e) => setAccountForm({...accountForm, oldEmail: e.target.value})} 
+                                />
+                                <input 
+                                    type="email" 
+                                    autoComplete="off"
+                                    className="w-full p-4 rounded-[1rem] bg-white border border-slate-200 focus:border-green-500 outline-none transition-all shadow-sm" 
+                                    placeholder="New Email Address" 
+                                    value={accountForm.newEmail} 
+                                    onChange={(e) => setAccountForm({...accountForm, newEmail: e.target.value})} 
+                                />
+                            </div>
+
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-3">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Update Password</h4>
+                                <input 
+                                    type="password" 
+                                    autoComplete="new-password"
+                                    className="w-full p-4 rounded-[1rem] bg-white border border-slate-200 focus:border-green-500 outline-none transition-all shadow-sm" 
+                                    placeholder="Current Password" 
+                                    value={accountForm.oldPassword} 
+                                    onChange={(e) => setAccountForm({...accountForm, oldPassword: e.target.value})} 
+                                />
+                                <div className="flex gap-3">
+                                    <input 
+                                        type="password" 
+                                        autoComplete="new-password"
+                                        className="w-full p-4 rounded-[1rem] bg-white border border-slate-200 focus:border-green-500 outline-none transition-all shadow-sm" 
+                                        placeholder="New Password" 
+                                        value={accountForm.newPassword} 
+                                        onChange={(e) => setAccountForm({...accountForm, newPassword: e.target.value})} 
+                                    />
+                                    <input 
+                                        type="password" 
+                                        autoComplete="new-password"
+                                        className="w-full p-4 rounded-[1rem] bg-white border border-slate-200 focus:border-green-500 outline-none transition-all shadow-sm" 
+                                        placeholder="Confirm New" 
+                                        value={accountForm.confirmPassword} 
+                                        onChange={(e) => setAccountForm({...accountForm, confirmPassword: e.target.value})} 
+                                    />
+                                </div>
+                            </div>
+                            
+                            <button type="submit" className="w-full bg-green-700 hover:bg-green-800 text-white font-black py-4 rounded-[1rem] shadow-lg transition-all mt-4">
+                                SAVE CHANGES
+                            </button>
+                        </form>
+
+                        <div className="border-t border-slate-200 pt-6">
+                            <h4 className="text-xs font-black text-red-500 uppercase tracking-widest mb-3">Danger Zone</h4>
+                            
+                            {!showDeleteConfirm ? (
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowDeleteConfirm(true)} 
+                                    className="w-full bg-white hover:bg-red-50 text-red-600 font-bold py-4 rounded-[1rem] transition-all border border-red-200 hover:border-red-500 shadow-sm"
+                                >
+                                    DELETE ACCOUNT
+                                </button>
+                            ) : (
+                                <div className="bg-red-50 p-5 rounded-[1.5rem] border border-red-200 text-center animate-fade-in-up">
+                                    <p className="text-sm font-bold text-red-800 mb-4">
+                                        Are you absolutely sure? This will permanently erase your forest, history, and account.
+                                    </p>
+                                    <div className="flex gap-3">
+                                        <button 
+                                            type="button" 
+                                            onClick={handleDeleteAccount} 
+                                            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all shadow-md"
+                                        >
+                                            Yes, Delete
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setShowDeleteConfirm(false)} 
+                                            className="flex-1 bg-white border border-slate-300 text-slate-600 hover:bg-slate-100 font-bold py-3 rounded-xl transition-all shadow-sm"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <main className="max-w-4xl mx-auto px-6 mt-12 space-y-12">
                 <div className="bg-white/80 backdrop-blur-2xl p-10 rounded-[3.5rem] shadow-2xl border border-white/50">
                     <div className="flex flex-wrap items-center justify-between gap-6 mb-12">
@@ -349,25 +664,35 @@ function Profile() {
                             <p className="text-slate-500 font-medium mt-1">Deep dive into your carbon history</p>
                         </div>
                         
-                        <div className="flex gap-3 bg-white/50 p-2 rounded-3xl border border-white shadow-sm">
-                            <select 
-                                className="bg-white border-none p-3 px-5 rounded-2xl font-bold text-slate-700 outline-none ring-offset-2 focus:ring-2 focus:ring-green-500 cursor-pointer shadow-sm"
-                                value={viewDate.month}
-                                onChange={(e) => setViewDate({...viewDate, month: e.target.value})}
+                        <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex gap-3 bg-white/50 p-2 rounded-3xl border border-white shadow-sm">
+                                <select 
+                                    className="bg-white border-none p-3 px-5 rounded-2xl font-bold text-slate-700 outline-none ring-offset-2 focus:ring-2 focus:ring-green-500 cursor-pointer shadow-sm"
+                                    value={viewDate.month}
+                                    onChange={(e) => setViewDate({...viewDate, month: e.target.value})}
+                                >
+                                    {months.map((name, i) => (
+                                        <option key={i} value={i + 1}>{name}</option>
+                                    ))}
+                                </select>
+                                <select 
+                                    className="bg-white border-none p-3 px-5 rounded-2xl font-bold text-slate-700 outline-none ring-offset-2 focus:ring-2 focus:ring-green-500 cursor-pointer shadow-sm"
+                                    value={viewDate.year}
+                                    onChange={(e) => setViewDate({...viewDate, year: e.target.value})}
+                                >
+                                    {[2024, 2025, 2026].map(y => (
+                                        <option key={y} value={y}>{y}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <button 
+                                onClick={() => setShowAccountModal(true)} 
+                                className="bg-white hover:bg-slate-50 text-slate-700 font-black px-6 py-4 rounded-3xl shadow-sm border border-slate-200 hover:border-slate-300 transition-all flex items-center gap-2"
                             >
-                                {months.map((name, i) => (
-                                    <option key={i} value={i + 1}>{name}</option>
-                                ))}
-                            </select>
-                            <select 
-                                className="bg-white border-none p-3 px-5 rounded-2xl font-bold text-slate-700 outline-none ring-offset-2 focus:ring-2 focus:ring-green-500 cursor-pointer shadow-sm"
-                                value={viewDate.year}
-                                onChange={(e) => setViewDate({...viewDate, year: e.target.value})}
-                            >
-                                {[2024, 2025, 2026].map(y => (
-                                    <option key={y} value={y}>{y}</option>
-                                ))}
-                            </select>
+                                <span>⚙️</span>
+                                <span className="text-sm">Account</span>
+                            </button>
                         </div>
                     </div>
 
@@ -378,9 +703,13 @@ function Profile() {
                                 {stats.total_co2.toFixed(2)} 
                                 <span className="text-xl font-medium opacity-70">kg</span>
                             </div>
-                            <div className="mt-8 flex items-center gap-2 text-sm font-bold bg-white/10 w-fit px-4 py-2 rounded-full">
-                                <span>📊</span> {stats.total_entries} Activities Logged
-                            </div>
+                            
+                            <button 
+                                onClick={openLogsModal}
+                                className="mt-8 flex items-center gap-2 text-sm font-bold bg-white/10 hover:bg-white/20 w-fit px-5 py-2.5 rounded-full transition-all cursor-pointer hover:scale-105"
+                            >
+                                <span>📊</span> {stats.total_entries} Activities Logged <span className="opacity-50 ml-1">➔</span>
+                            </button>
                         </div>
 
                         {projections && (
@@ -391,8 +720,15 @@ function Profile() {
                                         ~{projections.projected_total}
                                         <span className="text-xl font-medium text-white ml-2">kg</span>
                                     </div>
-                                    <p className="text-sm mt-8 text-slate-400 font-medium leading-relaxed">
-                                        At your current pace, you'll reach this total by the end of the month.
+                                    <p className="text-sm mt-8 text-slate-400 font-medium leading-relaxed flex items-center justify-between">
+                                        <span>At your current pace, you'll reach this total by the end of the month.</span>
+                                        <button 
+                                            onClick={() => setShowProjectionInfo(true)}
+                                            className="ml-4 w-8 h-8 shrink-0 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 flex items-center justify-center transition-all hover:scale-110"
+                                            title="How is this calculated?"
+                                        >
+                                            <span className="text-white font-black text-xs">?</span>
+                                        </button>
                                     </p>
                                 </div>
                                 <div className="absolute -right-8 -bottom-8 text-[12rem] opacity-[0.03] rotate-12 transition-transform group-hover:rotate-0">📈</div>
@@ -400,7 +736,6 @@ function Profile() {
                         )}
                     </div>
 
-                    {/* NEW: VIBRANT ACHIEVEMENTS ENGINE */}
                     <div className="mb-10 bg-white/60 p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
                         <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
                             <div className="flex items-center gap-3">
@@ -429,7 +764,6 @@ function Profile() {
                                                 <p className={`text-[9px] font-bold uppercase mt-1 tracking-wider ${isUnlocked ? 'text-green-700' : 'text-slate-400'}`}>{achieve.desc}</p>
                                             </div>
                                         </div>
-                                        {/* Progress Bar Container */}
                                         <div className="w-full bg-slate-200/50 rounded-full h-1.5 overflow-hidden flex">
                                             <div className={`h-full rounded-full transition-all duration-1000 ${isUnlocked ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-slate-400'}`} style={{ width: `${achieve.progress}%` }}></div>
                                         </div>

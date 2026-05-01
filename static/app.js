@@ -12,21 +12,24 @@ function Dashboard() {
     const [editValue, setEditValue] = useState('');
     const [currentTip, setCurrentTip] = useState('');
     const [showSettings, setShowSettings] = useState(false);
+    
     const [isAnimatedBg, setIsAnimatedBg] = useState(() => {
         const saved = localStorage.getItem('ecoTrack_animatedBg');
         return saved !== null ? JSON.parse(saved) : true;
     });
+    
     const [weeklyGoal, setWeeklyGoal] = useState(() => {
         const saved = localStorage.getItem('ecoTrack_goal');
         return saved !== null ? JSON.parse(saved) : 100;
     });
+    
     const [isEditingGoal, setIsEditingGoal] = useState(false);
     const [tempGoal, setTempGoal] = useState(weeklyGoal);
 
     // ==========================================
-    // 📅 NEW: TABLE FILTER STATES
+    // 📅 TABLE FILTER STATES
     // ==========================================
-    const [filterType, setFilterType] = useState('current_month'); // Default to this month
+    const [filterType, setFilterType] = useState('current_month'); 
     const [customMonth, setCustomMonth] = useState(new Date().getMonth() + 1);
     const [customYear, setCustomYear] = useState(new Date().getFullYear());
 
@@ -43,8 +46,8 @@ function Dashboard() {
         { label: 'Dashboard', href: '/' },
         { label: 'My Forest', href: '/forest' },
         { label: 'User Guide', href: '/guide' },
-        { label: `Hi, ${window.currentUserName ? window.currentUserName.split(' ')[0] : 'User'}`, href: '/profile', isUser: true },
         { label: 'Logout', href: '/logout' },
+        { label: `Hi, ${window.currentUserName ? window.currentUserName.split(' ')[0] : 'User'}`, href: '/profile', isUser: true }
     ];
 
     // --- EFFECTS & API ---
@@ -154,7 +157,11 @@ function Dashboard() {
       }
     };
 
-    const saveGoal = () => { setWeeklyGoal(tempGoal); localStorage.setItem('ecoTrack_goal', JSON.stringify(tempGoal)); setIsEditingGoal(false); };
+    const saveGoal = () => { 
+        setWeeklyGoal(tempGoal); 
+        localStorage.setItem('ecoTrack_goal', JSON.stringify(tempGoal)); 
+        setIsEditingGoal(false); 
+    };
     
     const ratio = totalCo2 / weeklyGoal;
 
@@ -192,9 +199,10 @@ function Dashboard() {
             return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
         }
         if (filterType === '1m') {
-            const past = new Date();
-            past.setMonth(now.getMonth() - 1);
-            return logDate >= past;
+            // Strict Previous Calendar Month
+            const targetMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+            const targetYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+            return logDate.getMonth() === targetMonth && logDate.getFullYear() === targetYear;
         }
         if (filterType === '3m') {
             const past = new Date();
@@ -207,9 +215,8 @@ function Dashboard() {
             return logDate >= past;
         }
         if (filterType === '1y') {
-            const past = new Date();
-            past.setFullYear(now.getFullYear() - 1);
-            return logDate >= past;
+            // Strict Calendar Year (e.g. only 2026)
+            return logDate.getFullYear() === now.getFullYear();
         }
         if (filterType === 'custom_month') {
             return logDate.getMonth() + 1 === customMonth && logDate.getFullYear() === customYear;
@@ -218,6 +225,7 @@ function Dashboard() {
     });
 
     const dynamicBgColor = calculateHeatColor(ratio);
+    
     return (
         <div className="relative min-h-screen font-sans text-slate-900 pb-20">
             {/* 1. NAVIGATION */}

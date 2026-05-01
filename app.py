@@ -411,5 +411,124 @@ def handle_forest():
         cur.close()
         conn.close()
 
+@app.route('/api/update-account', methods=['POST'])
+def update_account():
+    # Ensure user is logged in
+    if 'user_id' not in session:
+        return jsonify({"status": "Error", "message": "Unauthorized"}), 401
+
+    user_id = session['user_id']
+    data = request.get_json()
+
+    new_name = data.get('name')
+    old_email = data.get('oldEmail')
+    new_email = data.get('newEmail')
+    old_password = data.get('oldPassword')
+    new_password = data.get('newPassword')
+
+    try:
+        # Use your custom connection format
+        conn = get_conn()
+        cursor = conn.cursor()
+        
+        # Fetch current user data to verify old credentials
+        cursor.execute("SELECT email, password_hash FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+        
+        if not user:
+            cursor.close()
+            conn.close()
+            return jsonify({"status": "Error", "message": "User not found."}), 404
+            
+        current_email = user[0]  
+        current_password_hash = user[1]
+
+        updates = []
+        params = []
+
+        # Handle Name Update
+        if new_name:
+            updates.append("name = %s")
+            params.append(new_name)
+            session['user_name'] = new_name
+
+        # Handle Email Update
+        if new_email:
+            if not old_email or old_email.lower() != current_email.lower():
+                cursor.close()
+                conn.close()
+                return jsonify({"status": "Error", "message": "Incorrect current email address."}), 400
+            updates.append("email = %s")
+            params.append(new_email)
+
+        # Handle Password Update
+        if new_password:
+            if not old_password or not check_password_hash(current_password_hash, old_password):
+                cursor.close()
+                conn.close()
+                return jsonify({"status": "Error", "message": "Incorrect current password."}), 400
+            updates.append("password_hash = %s")
+            params.append(generate_password_hash(new_password))
+
+        # Check for blank form
+        if not updates:
+            cursor.close()
+            conn.close()
+            return jsonify({"status": "Error", "message": "No changes were requested."}), 400
+
+        # Execute the dynamic query
+        params.append(user_id)
+        query = "UPDATE users SET " + ", ".join(updates) + " WHERE id = %s"
+        
+        cursor.execute(query, tuple(params))
+        conn.commit()
+        
+        # Clean up connections
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "status": "Success", 
+            "new_name": session.get('user_name')
+        })
+
+    except Exception as e:
+        print(f"Error updating account: {e}")
+        return jsonify({"status": "Error", "message": "A database error occurred."}), 500
+
+
+@app.route('/api/delete-account', methods=['DELETE'])
+def delete_account():
+    # Ensure user is logged in
+    if 'user_id' not in session:
+        return jsonify({"status": "Error", "message": "Unauthorized"}), 401
+
+    user_id = session['user_id']
+
+    try:
+        # Use your custom connection format
+        conn = get_conn()
+        cursor = conn.cursor()
+        
+        # Delete their forest logs and activity logs first to prevent orphaned data
+        cursor.execute("DELETE FROM user_forest WHERE user_id = %s", (user_id,))
+        cursor.execute("DELETE FROM user_logs WHERE user_id = %s", (user_id,))
+        
+        # Delete the user
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        conn.commit()
+        
+        # Clean up connections
+        cursor.close()
+        conn.close()
+        
+        # Clear the session
+        session.clear()
+        
+        return jsonify({"status": "Success"})
+        
+    except Exception as e:
+        print(f"Error deleting account: {e}")
+        return jsonify({"status": "Error", "message": "Database error occurred."}), 500
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
