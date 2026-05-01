@@ -25,21 +25,25 @@ INSERT INTO activity_factors (activity_name, category, co2_per_unit, unit_label)
 ('Flight (Short Haul)', 'Transport', 0.25, 'miles'),
 ('Flight (Long Haul)', 'Transport', 0.18, 'miles');
 
+-- Create the user logs table
 CREATE TABLE user_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     activity_id INT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     log_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (activity_id) REFERENCES activity_factors(id)
 );
 
+-- Create the user forest table (UPDATED FOR GEOLOCATION)
 CREATE TABLE user_forest (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
+    user_id INT NOT NULL,
     species VARCHAR(100),
-    location VARCHAR(100),
-    date_planted DATE,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    location_name VARCHAR(255),
+    lat DECIMAL(10, 8),
+    lng DECIMAL(11, 8), 
+    date_planted TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
